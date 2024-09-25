@@ -181,30 +181,223 @@ const handleLogin = () => {
   
   const songs2 = ref<Song[]>([
     {
-      "id": 1,
-      "title": "Nothing is impossible",
-      "artist": "Planetshakers",
-      "bpm": "128",
-      "originalKey": "C",
-      "chords": "Chorus: xyz C G Am F // xyz Interlude: xyz F C Dm F // xyz Verse: xyz C Dm F xyz Am G F xyz Pre-Chorus: xyz Am G F xyz Am G Dm F xyz Bridge: xyz F C Dm F //"
+        "id":1,
+        "title": "Nothing is impossible",
+        "artist":"Planetshakers",
+        "bpm":"128",
+        "originalKey":"C",
+        "chords": "Chorus: xyz C G Am F // xyz Interlude: xyz F C Dm F // xyz Verse: xyz C Dm F xyz Am G F xyz Pre-Chorus: xyz Am G F xyz Am G Dm F xyz Bridge: xyz F C Dm F //"
     },
     {
-      "id": 2,
-      "title": "Обійми мене",
-      "artist": "Океан Ельзи",
-      "bpm": "80",
-      "originalKey": "D#",
-      "chords": "Interlude: xyz G7 F G7 F D# Cm xyz Verse: xyz Cm Gm G# Gm xyz Cm Gm G# G7 xyz Chorus: xyz Cm Gm G# G7"
+        "id":2,
+        "title": "Обійми мене",
+        "artist":"Океан Ельзи",
+        "bpm":"80",
+        "originalKey":"D#",
+        "chords": "Interlude: xyz G7 F G7 F D# Cm xyz Verse: xyz Cm Gm G# Gm xyz Cm Gm G# G7 xyz Chorus: xyz Cm Gm G# G7"
     },
     {
-      "id": 3,
-      "title": "Behind Blue Eyes",
-      "artist": "Limp Bizkit",
-      "bpm": "90",
-      "originalKey": "D",
-      "chords": "Verse: xyz Em G D C A // xyz Chorus: xyz C D G C D E xyz Bm C D A"
+        "id":3,
+        "title": "Behind Blue Eyes",
+        "artist":"Limp Bizkit",
+        "bpm":"90",
+        "originalKey":"D",
+        "chords": "Verse: xyz Em G D C A // xyz Chorus: xyz C D G C D E xyz Bm C D A" 
+    },
+    {
+        "id":4,
+        "title": "Poker Face",
+        "artist":"Lady Gaga",
+        "originalKey":"B",
+        "bpm":"-",
+        "chords": "Verse: xyz G#m E B A#m //// xyz Chorus: xyz G#m E B A#m //" 
+    },
+    {
+        "id":5,
+        "title": "Stefania",
+        "artist":"KALUSH",
+        "originalKey":"F",
+        "bpm":"-",
+        "chords": "Verse: xyz Dm A# A // xyz Chorus: xyz A# Gm A Dm //// xyz Interlude: xyz A# Gm A Dm A5 A#" 
+    },
+    {
+        "id":6,
+        "title": "Kamsahamnida",
+        "artist":"planetboom",
+        "originalKey":"G#m",
+        "bpm":"156",
+        "chords": "Verse: xyz G#m /// F#m //// xyz Chorus: xyz E G#m C#m B // xyz G#m /// xyz Interlude: xyz E G#m C#m B xyz Bridge: xyz G#m E F# //" 
+    },
+    {
+        "id":7,
+        "title": "Blessing",
+        "artist":"Kari Jobe",
+        "bpm":"-",
+        "originalKey":"H",
+        "chords": "Verse: xyz H E H F#sus xyz G#m E H F#m H xyz Chorus: xyz G#m E H F# //// xyz Interlude: xyz G#m E H F#" 
+    },
+    {
+        "id":8,
+        "title": "Promise",
+        "artist":"Spoken",
+        "bpm":"-",
+        "originalKey": "-",
+        "chords": "Empty" 
+    },
+    {
+        "id":9,
+        "title": "Just Like Heaven",
+        "artist":"Brandon Lake",
+        "bpm":"-",
+        "originalKey": "-",
+        "chords": "-"
+    },
+    {
+        "id":10,
+        "title": "Я буду славить Господа Христа",
+        "artist":"Сергей Брикса",
+        "bpm":"-",
+        "originalKey":"G",
+        "chords": "Intro: xyz G D C D xyz Verse: xyz G D C D xyz Em C Am xyz D C D xyz Chorus: xyz G D Em C xyz G D C D" 
+    },
+    {
+        "id":11,
+        "title": "Наш Бог благ и милостив",
+        "artist":"Новое Поколение",
+        "bpm":"",
+        "originalKey":"G",
+        "chords": "Verse: xyz Em C Am D // xyz G D C D // xyz Chorus: xyz G D Em C" 
+    },
+    {
+        "id":12,
+        "title": "Put Your Hands Up",
+        "artist":"Planetshakers",
+        "bpm":"124",
+        "originalKey":"C#",
+        "chords": "Verse: xyz A#m G# C# F# //// xyz Pre-Chorus: xyz A#m G# C# F# xyz A#m G# F# xyz Chorus: xyz A#m F# C# G# /// xyz C# F# A#m G# xyz Bridge: xyz C#m ////" 
+    },
+    {
+        "id":13,
+        "title": "Прихожу к Тебе я с хвалою",
+        "artist":"JoyYouth Worship",
+        "bpm":"",
+        "originalKey":"H",
+        "chords": "Verse: xyz H G#m E F# // xyz Chorus: xyz H F# G#m xyz F# E" 
+    },
+    {
+        "id":14,
+        "title": "Holy Spirit",
+        "artist":"Jesus Culture",
+        "bpm":"72",
+        "originalKey":"C",
+        "chords": "Verse: xyz C F2 //// xyz Chorus: xyz C F2 Dm7 // xyz Bridge: xyz F2 C Dm7 C" 
+    },
+    {
+        "id":15,
+        "title": "Way Maker",
+        "artist":"Leeland",
+        "bpm":"",
+        "originalKey":"A",
+        "chords": "Verse: xyz Chorus: xyz Bridge: xyz A2 E Hsus C#m" 
+    },
+    {
+        "id":16,
+        "title": "Этот день сотворил Господь",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"G",
+        "chords": "Verse: xyz G G C D // xyz Chorus: xyz G B C D" 
+    },
+    {
+        "id":17,
+        "title": "Ты моя защита",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"G",
+        "chords": "Verse: xyz Em Am G D C Em // xyz Chorus: xyz Am G D /// xyz Em D C Em" 
+    },
+    {
+        "id":18,
+        "title": "Вся хвала тобі Господь",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"D",
+        "chords": "Verse: xyz Chorus: xyz Bridge: xyz D Hm G A D" 
+    },
+    {
+        "id":19,
+        "title": "Господь, Ты Пастырь мой",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"Am",
+        "chords": "Verse: xyz Am Dm G C Am Dm E" 
+    },
+    {
+        "id":20,
+        "title": "Holy and Anointed One",
+        "artist":"Bethel",
+        "bpm":"",
+        "originalKey":"E",
+        "chords": "Verse: xyz E H A /// xyz E H C#m A xyz E H A xyz Chorus: xyz A E // xyz A C#m xyz A H xyz Bridge: xyz A E H" 
+    },
+    {
+        "id":21,
+        "title": "My Redeemer lives",
+        "artist":"Hillsong",
+        "bpm":"",
+        "originalKey":"E",
+        "chords": "Verse: xyz E A //// xyz H A A H xyz Chorus: xyz E A C#m H" 
+    },
+    {
+        "id":22,
+        "title": "Вечно буду славить",
+        "artist":"Виталий Ефремочкин",
+        "bpm":"",
+        "originalKey":"E",
+        "chords": "Verse: xyz C#m H /// xyz A H xyz Chorus: xyz C#m A H F#m xyz Bridge: xyz C#m H E F#m" 
+    },
+    {
+        "id":23,
+        "title": "Yeshua",
+        "artist":"Jesus Image",
+        "bpm":"",
+        "originalKey":"A#",
+        "chords": "Verse: xyz Dm A# F C xyz Chorus: xyz A# C Dm Am xyz Bridge: xyz A# C Dm Am" 
+    },
+    {
+        "id":24,
+        "title": "О, Благодать",
+        "artist":"4UBand",
+        "bpm":"",
+        "originalKey":"D",
+        "chords": "Verse: xyz D A G A // xyz Chorus: xyz Hm G D A xyz Bridge: xyz  D A Hm G" 
+    },
+    {
+        "id":25,
+        "title": "Досконалий Бог",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"Em",
+        "chords": "Verse: xyz Em D C H xyz G D Am H xyz Pre-Chorus: xyz C Am H // xyz Chorus: xyz Em G Am H //" 
+    },
+    {
+        "id":26,
+        "title": "Очи мои к горам",
+        "artist":"Unknown",
+        "bpm":"",
+        "originalKey":"E",
+        "chords": "Verse: xyz C#m A H G# // xyz Chorus: xyz C#m A H xyz Bridge: xyz C#m H" 
+    },
+    {
+        "id":27,
+        "title": "Нехай лине Дух",
+        "artist":"Unknown",
+        "bpm":"-",
+        "originalKey":"F",
+        "chords": "Verse: xyz Dm C //// xyz Gm C Dm C Dm xyz Chorus: xyz Gm C Dm" 
     }
-  ])
+
+])
   
   const newSong = ref<Omit<Song, 'id'>>({
     title: '',
