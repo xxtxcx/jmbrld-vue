@@ -43,71 +43,110 @@
           </div>
         </header>
   
-        <!-- Add Song Modal -->
-        <q-dialog v-model="showAddSongModal" persistent>
-          <q-card class="w-full max-w-md bg-modal">
-            <q-card-section>
-              <div class="text-h6 text-modal-title">Add New Song</div>
-            </q-card-section>
-  
-            <q-card-section class="q-pt-none">
-              <q-input v-model="newSong.title" label="Title" class="q-mb-md text-modal-input" dark />
-              <q-input v-model="newSong.artist" label="Artist" class="q-mb-md text-modal-input" dark />
-              <q-input v-model="newSong.originalKey" label="Key" class="q-mb-md text-modal-input" dark />
-              <q-input v-model="newSong.bpm" label="BPM" type="number" class="q-mb-md text-modal-input" dark />
-              <q-input v-model="newSong.chords" label="Chords" type="textarea" class="q-mb-md text-modal-input" dark />
-            </q-card-section>
-  
-            <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="primary" v-close-popup />
-              <q-btn flat label="Add Song" color="primary" @click="addNewSong" v-close-popup />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-  
-        <!-- Song list -->
-        <div class="flex-1 overflow-y-auto p-4 bg-content">
-          <div class="space-y-4">
-            <div v-for="song in visibleSongList" :key="song.id" class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition">
-              <div class="flex justify-between items-center" @click="toggleSongExpansion(song.id)">
-                <div>
-                  <h2 class="text-lg font-semibold text-card-title">{{ song.title }}</h2>
-                  <p class="text-card-subtitle">{{ song.artist }}</p>
+        <!-- Song list and details -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <!-- Song list -->
+          <div :class="{'md:w-1/2': selectedSong && isWideScreen}" class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-4">
+              <div v-for="song in visibleSongList" :key="song.id" 
+                   @click="selectSong(song)"
+                   class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h2 class="ext-lg font-semibold text-card-title">{{ song.title }}</h2>
+                    <p class="text-card-subtitle">{{ song.artist }}</p>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm text-card-info">Key: {{ song.originalKey }}</span>
+                    <ChevronRight v-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
+                    <ChevronUp v-else-if="!isWideScreen && expandedSong === song.id" :size="20" class="text-card-icon" />
+                <ChevronDown v-else-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
+                  </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                  <span class="text-sm text-card-info">Key: {{ song.originalKey }}</span>
-                  <ChevronUp v-if="expandedSong === song.id" :size="20" class="text-card-icon" />
-                  <ChevronDown v-else :size="20" class="text-card-icon" />
+                <!-- Mobile view: expandable content -->
+                <div v-if="!isWideScreen && expandedSong === song.id" class="bg-header mt-4 p-4 rounded">
+                  <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
+                  <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre>
                 </div>
-              </div>
-              <div v-if="expandedSong === song.id" class="mt-4 p-4 bg-card-expanded rounded">
-                <h3 class="font-semibold mb-2 text-card-expanded-title">Chords:</h3>
-                <pre class="whitespace-pre-wrap font-mono text-sm text-card-expanded-text">{{ song.chords }}</pre>
               </div>
             </div>
           </div>
-        </div>
-      </div>
   
-      <!-- Song details sidebar - hidden on mobile -->
-      <div v-if="selectedSong" class="hidden md:block w-64 bg-sidebar-details shadow-lg p-4">
-        <h2 class="text-xl font-bold mb-2 text-sidebar-details-title">{{ selectedSong.title }}</h2>
-        <p class="text-sidebar-details-subtitle mb-4">{{ selectedSong.artist }}</p>
-        <div>
-          <h3 class="font-semibold mb-2 text-sidebar-details-subtitle">Transpose</h3>
-          <div class="flex justify-between">
-            <q-btn color="primary" label="-" />
-            <span class="text-sidebar-details-text">Key: {{ selectedSong.originalKey }}</span>
-            <q-btn color="primary" label="+" />
+          <!-- Song details for wide screens -->
+          <div v-if="selectedSong && isWideScreen" class="md:w-1/2 bg-header overflow-y-auto p-6 border-l border-input-border">
+            <h2 class="text-2xl font-bold mb-2 text-card-title">{{ selectedSong.title }}</h2>
+            <p class="text-xl text-card-subtitle mb-4">{{ selectedSong.artist }}</p>
+            <div class="mb-6">
+              <span class="inline-block bg-bumble rounded-full px-3 py-1 text-sm font-semibold text-card-subtitle mr-2">
+                Key: {{ selectedSong.originalKey }}
+              </span>
+              <span class="inline-block bg-bumble rounded-full px-3 py-1 text-sm font-semibold text-card-subtitle">
+                BPM: {{ selectedSong.bpm }}
+              </span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2 text-card-title">Chords:</h3>
+            <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle bg-light dark:bg-dark p-4 rounded">{{ selectedSong.chords }}</pre>
           </div>
         </div>
       </div>
+  
+      <!-- Add Song Modal -->
+      <Teleport to="body">
+        <div v-if="showAddSongModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Song</h2>
+              <button @click="cancelAddSong" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+  
+            <div class="grid grid-cols-6 gap-4">
+              <div class="col-span-3">
+                <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                <input v-model="newSong.title" id="title" placeholder="Song Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              <div class="col-span-3">
+                <label for="artist" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Artist</label>
+                <input v-model="newSong.artist" id="artist" placeholder="Artist Name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              <div class="col-span-2">
+                <label for="key" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Key</label>
+                <select v-model="newSong.originalKey" id="key" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option v-for="key in musicKeys" :key="key" :value="key">{{ key }}</option>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <label for="bpm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">BPM</label>
+                <input v-model.number="newSong.bpm" id="bpm" type="number" min="50" max="150" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              <div class="col-span-6">
+                <label for="chords" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chords</label>
+                <textarea v-model="newSong.chords" id="chords" rows="5" placeholder="Enter chords here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+              </div>
+            </div>
+  
+            <div class="flex justify-end mt-6 space-x-2">
+              <button @click="cancelAddSong" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors duration-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+                Cancel
+              </button>
+              <button 
+                @click="addNewSong" 
+                :disabled="!isFormValid" 
+                class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Song
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
     </div>
   </template>
   
   <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
-  import { Search, Music, List, Settings, ChevronDown, ChevronUp, Sun, Moon, Plus } from 'lucide-vue-next'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus } from 'lucide-vue-next'
   
   interface Song {
     id: number;
@@ -118,36 +157,42 @@
     bpm: string;
   }
   
+  const musicKeys = [
+    'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
+  ]
+  
   const selectedSong = ref<Song | null>(null)
   const expandedSong = ref<number | null>(null)
+  const isWideScreen = ref(window.innerWidth >= 768)
   const isDarkMode = ref(false)
   const showAddSongModal = ref(false)
+  const searchTerm = ref("")
   
   const songs2 = ref<Song[]>([
-      {
-          "id":1,
-          "title": "Nothing is impossible",
-          "artist":"Planetshakers",
-          "bpm":"128",
-          "originalKey":"C",
-          "chords": "Chorus: xyz C G Am F // xyz Interlude: xyz F C Dm F // xyz Verse: xyz C Dm F xyz Am G F xyz Pre-Chorus: xyz Am G F xyz Am G Dm F xyz Bridge: xyz F C Dm F //"
-      },
-      {
-          "id":2,
-          "title": "Обійми мене",
-          "artist":"Океан Ельзи",
-          "bpm":"80",
-          "originalKey":"D#",
-          "chords": "Interlude: xyz G7 F G7 F D# Cm xyz Verse: xyz Cm Gm G# Gm xyz Cm Gm G# G7 xyz Chorus: xyz Cm Gm G# G7"
-      },
-      {
-          "id":3,
-          "title": "Behind Blue Eyes",
-          "artist":"Limp Bizkit",
-          "bpm":"90",
-          "originalKey":"D",
-          "chords": "Verse: xyz Em G D C A // xyz Chorus: xyz C D G C D E xyz Bm C D A" 
-      }
+    {
+      "id": 1,
+      "title": "Nothing is impossible",
+      "artist": "Planetshakers",
+      "bpm": "128",
+      "originalKey": "C",
+      "chords": "Chorus: xyz C G Am F // xyz Interlude: xyz F C Dm F // xyz Verse: xyz C Dm F xyz Am G F xyz Pre-Chorus: xyz Am G F xyz Am G Dm F xyz Bridge: xyz F C Dm F //"
+    },
+    {
+      "id": 2,
+      "title": "Обійми мене",
+      "artist": "Океан Ельзи",
+      "bpm": "80",
+      "originalKey": "D#",
+      "chords": "Interlude: xyz G7 F G7 F D# Cm xyz Verse: xyz Cm Gm G# Gm xyz Cm Gm G# G7 xyz Chorus: xyz Cm Gm G# G7"
+    },
+    {
+      "id": 3,
+      "title": "Behind Blue Eyes",
+      "artist": "Limp Bizkit",
+      "bpm": "90",
+      "originalKey": "D",
+      "chords": "Verse: xyz Em G D C A // xyz Chorus: xyz C D G C D E xyz Bm C D A"
+    }
   ])
   
   const newSong = ref<Omit<Song, 'id'>>({
@@ -159,11 +204,24 @@
   })
   
   const addNewSong = () => {
-    const songToAdd: Song = {
-      ...newSong.value,
-      id: Date.now(),
+    if (isFormValid.value) {
+      const songToAdd: Song = {
+        ...newSong.value,
+        id: Date.now(),
+      }
+      songs2.value.push(songToAdd)
+      resetForm()
+      showAddSongModal.value = false
+      alert('New song added successfully!')
     }
-    songs2.value.push(songToAdd)
+  }
+  
+  const cancelAddSong = () => {
+    resetForm()
+    showAddSongModal.value = false
+  }
+  
+  const resetForm = () => {
     newSong.value = {
       title: '',
       artist: '',
@@ -171,10 +229,13 @@
       chords: '',
       bpm: '',
     }
-    showAddSongModal.value = false
   }
   
-  const searchTerm = ref("")
+  const isFormValid = computed(() => {
+    return newSong.value.title.trim() !== '' && 
+           newSong.value.artist.trim() !== '' && 
+           newSong.value.originalKey !== ''
+  })
   
   const onUpdateSearch = (event: Event) => {
     searchTerm.value = (event.target as HTMLInputElement).value
@@ -192,8 +253,12 @@
   
   const visibleSongList = computed(() => searchEmp(songs2.value, searchTerm.value))
   
-  const toggleSongExpansion = (id: number) => {
-    expandedSong.value = expandedSong.value === id ? null : id
+  const selectSong = (song: Song) => {
+    if (isWideScreen.value) {
+      selectedSong.value = song
+    } else {
+      expandedSong.value = expandedSong.value === song.id ? null : song.id
+    }
   }
   
   const toggleTheme = () => {
@@ -201,7 +266,12 @@
     localStorage.setItem('darkMode', isDarkMode.value.toString())
   }
   
-  onMounted(() => {
+  const handleResize = () => {
+    isWideScreen.value = window.innerWidth >= 768
+  }
+  
+  onMounted(() =>{
+    window.addEventListener('resize', handleResize)
     const savedTheme = localStorage.getItem('darkMode')
     if (savedTheme !== null) {
       isDarkMode.value = savedTheme === 'true'
@@ -209,6 +279,11 @@
       isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
     }
   })
+
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
   </script>
   
   <style>
@@ -226,6 +301,7 @@
     --color-input-icon: #9ca3af;
     --color-sidebar: #3730a3;
     --color-sidebar-hover: #4338ca;
+    --color-bumble: #cac6fb;
   }
   
   .dark {
@@ -242,6 +318,7 @@
     --color-input-icon: #9ca3af;
     --color-sidebar: #1e1b4b;
     --color-sidebar-hover: #3730a3;
+    --color-bumble: #374151
   }
   
   .bg-light { background-color: var(--color-background); }
@@ -253,6 +330,7 @@
   .bg-card-expanded { background-color: var(--color-card-expanded); }
   .bg-modal { background-color: var(--color-card-background); }
   .bg-sidebar-details { background-color: var(--color-sidebar); }
+  .bg-bumble { background-color: var(--color-bumble); }
   
   .text-primary { color: var(--color-primary); }
   .text-input-text { color: var(--color-input-text); }
@@ -279,4 +357,21 @@
   .SidebarButton {
     @apply p-2 hover:bg-sidebar-hover rounded-full transition-colors duration-200;
   }
+
+  /* Додайте ці стилі, якщо вони ще не визначені у вашому глобальному CSS */
+.bg-primary {
+  background-color: #4338CA;
+}
+.bg-primary-dark {
+  background-color: #3730A3;
+}
+.text-primary {
+  color: #4338CA;
+}
+.focus\:border-primary:focus {
+  border-color: #4338CA;
+}
+.focus\:ring-primary:focus {
+  --tw-ring-color: #4338CA;
+}
   </style>
