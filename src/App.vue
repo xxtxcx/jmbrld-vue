@@ -1,5 +1,7 @@
 <template>
     <div :class="{ 'dark': isDarkMode }" class="flex h-screen bg-light dark:bg-dark">
+        <LoginForm v-if="!isLoggedIn" @login="handleLogin" />
+    <template v-else>
       <!-- Sidebar -->
       <div class="w-20 bg-sidebar text-white flex flex-col items-center py-4">
         <div class="mb-8">
@@ -91,60 +93,62 @@
       </div>
   
       <!-- Add Song Modal -->
-      <Teleport to="body">
-        <div v-if="showAddSongModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl shadow-xl">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Song</h2>
-              <button @click="cancelAddSong" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-            </div>
-  
-            <div class="grid grid-cols-6 gap-4">
-              <div class="col-span-3">
-                <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
-                <input v-model="newSong.title" id="title" placeholder="Song Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-              </div>
-              <div class="col-span-3">
-                <label for="artist" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Artist</label>
-                <input v-model="newSong.artist" id="artist" placeholder="Artist Name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-              </div>
-              <div class="col-span-2">
-                <label for="key" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Key</label>
-                <select v-model="newSong.originalKey" id="key" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option v-for="key in musicKeys" :key="key" :value="key">{{ key }}</option>
-                </select>
-              </div>
-              <div class="col-span-2">
-                <label for="bpm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">BPM</label>
-                <input v-model.number="newSong.bpm" id="bpm" type="number" min="50" max="150" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-              </div>
-              <div class="col-span-6">
-                <label for="chords" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chords</label>
-                <textarea v-model="newSong.chords" id="chords" rows="5" placeholder="Enter chords here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-              </div>
-            </div>
-  
-            <div class="flex justify-end mt-6 space-x-2">
-              <button @click="cancelAddSong" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors duration-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
-                Cancel
-              </button>
-              <button 
-                @click="addNewSong" 
-                :disabled="!isFormValid" 
-                class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Song
-              </button>
-            </div>
-          </div>
+<Teleport to="body">
+  <div :class="{ 'dark': !isDarkMode }" v-if="showAddSongModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-card rounded-lg p-8 w-full max-w-2xl shadow-xl">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-card-title">Add New Song</h2>
+        <button @click="cancelAddSong" class="text-card-icon hover:text-primary transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-6 gap-6">
+        <div class="col-span-3">
+          <label for="title" class="block text-sm font-medium text-card-title mb-2">Title</label>
+          <input v-model="newSong.title" id="title" placeholder="Song Title" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
         </div>
-      </Teleport>
+        <div class="col-span-3">
+          <label for="artist" class="block text-sm font-medium text-card-title mb-2">Artist</label>
+          <input v-model="newSong.artist" id="artist" placeholder="Artist Name" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
+        </div>
+        <div class="col-span-2">
+          <label for="key" class="block text-sm font-medium text-card-title mb-2">Key</label>
+          <select v-model="newSong.originalKey" id="key" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
+            <option v-for="key in musicKeys" :key="key" :value="key">{{ key }}</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label for="bpm" class="block text-sm font-medium text-card-title mb-2">BPM</label>
+          <input v-model.number="newSong.bpm" id="bpm" type="number" min="50" max="150" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
+        </div>
+        <div class="col-span-6">
+          <label for="chords" class="block text-sm font-medium text-card-title mb-2">Chords</label>
+          <textarea v-model="newSong.chords" id="chords" rows="5" placeholder="Enter chords here" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-8 space-x-4">
+        <button @click="cancelAddSong" class="px-6 py-3 bg-card-expanded text-card-title rounded hover:bg-bumble transition-colors duration-300">
+          Cancel
+        </button>
+        <button 
+          @click="addNewSong" 
+          :disabled="!isFormValid" 
+          class="px-6 py-3 bg-primary text-white rounded hover:bg-primary-hover transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add Song
+        </button>
+      </div>
+    </div>
+  </div>
+</Teleport>
+</template>
     </div>
   </template>
   
   <script setup lang="ts">
+  import LoginForm from './components/LoginForm.vue'; 
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus } from 'lucide-vue-next'
   
@@ -157,6 +161,18 @@
     bpm: string;
   }
   
+  const isLoggedIn = ref(false);
+
+const handleLogin = () => {
+  isLoggedIn.value = true;
+  localStorage.setItem('isLoggedIn', 'true');
+};
+
+const handleLogout = () => {
+  isLoggedIn.value = false;
+  localStorage.removeItem('isLoggedIn');
+};
+
   const musicKeys = [
     'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
   ]
@@ -271,6 +287,10 @@
   }
   
   onMounted(() =>{
+    const loggedIn = localStorage.getItem('isLoggedIn');
+  if (loggedIn === 'true') {
+    isLoggedIn.value = true;
+  }
     window.addEventListener('resize', handleResize)
     const savedTheme = localStorage.getItem('darkMode')
     if (savedTheme !== null) {
@@ -287,91 +307,67 @@ onUnmounted(() => {
   </script>
   
   <style>
-  :root {
-    --color-primary: #3730a3;
-    --color-primary-hover: #4338ca;
-    --color-background: #f3f4f6;
-    --color-text: #111827;
-    --color-text-secondary: #4b5563;
-    --color-card-background: #ffffff;
-    --color-card-expanded: #f9fafb;
-    --color-input-background: #ffffff;
-    --color-input-text: #111827;
-    --color-input-border: #d1d5db;
-    --color-input-icon: #9ca3af;
-    --color-sidebar: #3730a3;
-    --color-sidebar-hover: #4338ca;
-    --color-bumble: #cac6fb;
-  }
-  
-  .dark {
-    --color-primary: #a5b4fc;
-    --color-primary-hover: #818cf8;
-    --color-background: #111827;
-    --color-text: #f9fafb;
-    --color-text-secondary: #9ca3af;
-    --color-card-background: #1f2937;
-    --color-card-expanded: #374151;
-    --color-input-background: #374151;
-    --color-input-text: #f9fafb;
-    --color-input-border: #4b5563;
-    --color-input-icon: #9ca3af;
-    --color-sidebar: #1e1b4b;
-    --color-sidebar-hover: #3730a3;
-    --color-bumble: #374151
-  }
-  
-  .bg-light { background-color: var(--color-background); }
-  .bg-dark { background-color: var(--color-background); }
-  .bg-sidebar { background-color: var(--color-sidebar); }
-  .bg-header { background-color: var(--color-card-background); }
-  .bg-content { background-color: var(--color-background); }
-  .bg-card { background-color: var(--color-card-background); }
-  .bg-card-expanded { background-color: var(--color-card-expanded); }
-  .bg-modal { background-color: var(--color-card-background); }
-  .bg-sidebar-details { background-color: var(--color-sidebar); }
-  .bg-bumble { background-color: var(--color-bumble); }
-  
-  .text-primary { color: var(--color-primary); }
-  .text-input-text { color: var(--color-input-text); }
-  .text-input-icon { color: var(--color-input-icon); }
-  .text-modal-title { color: var(--color-text); }
-  .text-modal-input { color: var(--color-input-text); }
-  .text-card-title { color: var(--color-text); }
-  .text-card-subtitle { color: var(--color-text-secondary); }
-  .text-card-info { color: var(--color-text-secondary); }
-  .text-card-icon { color: var(--color-text); }
-  .text-card-expanded-title { color: var(--color-text); }
-  .text-card-expanded-text { color: var(--color-text-secondary); }
-  .text-sidebar-details-title { color: var(--color-text); }
-  .text-sidebar-details-subtitle { color: var(--color-text-secondary); }
-  .text-sidebar-details-text { color: var(--color-text); }
-  
-  .border-input-border { border-color: var(--color-input-border); }
-  
-  .focus\:ring-primary:focus { --tw-ring-color: var(--color-primary); }
-  
-  .hover\:bg-sidebar-hover:hover { background-color: var(--color-sidebar-hover); }
-  
-  /* Additional utility classes */
-  .SidebarButton {
-    @apply p-2 hover:bg-sidebar-hover rounded-full transition-colors duration-200;
-  }
+:root {
+  --color-primary: #3730a3;
+  --color-primary-hover: #4338ca;
+  --color-background: #f3f4f6;
+  --color-text: #111827;
+  --color-text-secondary: #4b5563;
+  --color-card-background: #ffffff;
+  --color-card-expanded: #f9fafb;
+  --color-input-background: #ffffff;
+  --color-input-text: #111827;
+  --color-input-border: #d1d5db;
+  --color-input-icon: #9ca3af;
+  --color-sidebar: #3730a3;
+  --color-sidebar-hover: #4338ca;
+  --color-bumble: #cac6fb;
+}
 
-  /* Додайте ці стилі, якщо вони ще не визначені у вашому глобальному CSS */
-.bg-primary {
-  background-color: #4338CA;
+.dark {
+  --color-primary: #a5b4fc;
+  --color-primary-hover: #818cf8;
+  --color-background: #111827;
+  --color-text: #f9fafb;
+  --color-text-secondary: #9ca3af;
+  --color-card-background: #1f2937;
+  --color-card-expanded: #374151;
+  --color-input-background: #374151;
+  --color-input-text: #f9fafb;
+  --color-input-border: #4b5563;
+  --color-input-icon: #9ca3af;
+  --color-sidebar: #1e1b4b;
+  --color-sidebar-hover: #3730a3;
+  --color-bumble: #374151;
 }
-.bg-primary-dark {
-  background-color: #3730A3;
+
+/* Загальні стилі */
+.bg-light, .bg-dark { background-color: var(--color-background); }
+.bg-sidebar { background-color: var(--color-sidebar); }
+.bg-header, .bg-card, .bg-modal { background-color: var(--color-card-background); }
+.bg-card-expanded { background-color: var(--color-card-expanded); }
+.bg-bumble { background-color: var(--color-bumble); }
+
+.text-primary { color: var(--color-primary); }
+.text-input-text, .text-modal-input { color: var(--color-input-text); }
+.text-input-icon { color: var(--color-input-icon); }
+.text-card-title, .text-modal-title, .text-sidebar-details-title { color: var(--color-text); }
+.text-card-subtitle, .text-card-info, .text-sidebar-details-subtitle { color: var(--color-text-secondary); }
+.text-card-icon, .text-sidebar-details-text { color: var(--color-text); }
+
+.border-input-border { border-color: var(--color-input-border); }
+
+.focus\:ring-primary:focus { --tw-ring-color: var(--color-primary); }
+.focus\:border-primary:focus { border-color: var(--color-primary); }
+
+.hover\:bg-sidebar-hover:hover { background-color: var(--color-sidebar-hover); }
+
+/* Компонент-специфічні стилі */
+.SidebarButton {
+  @apply p-2 hover:bg-sidebar-hover rounded-full transition-colors duration-200;
 }
-.text-primary {
-  color: #4338CA;
-}
-.focus\:border-primary:focus {
-  border-color: #4338CA;
-}
-.focus\:ring-primary:focus {
-  --tw-ring-color: #4338CA;
-}
+
+/* Utility класи */
+.bg-primary { background-color: var(--color-primary); }
+.bg-primary-dark { background-color: var(--color-primary-hover); }
   </style>
