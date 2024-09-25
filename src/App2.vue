@@ -343,11 +343,6 @@ const songs2 = ref<Song[]>([
     }
 
 ])
-const songs: Song[] = [
-  { id: 1, title: 'Amazing Grace', artist: 'John Newton', originalKey: 'G', chords: 'G C G\nG C G\nG Em C G\nG C G', 'bpm': '' },
-  { id: 2, title: 'How Great Is Our God', artist: 'Chris Tomlin', originalKey: 'C', chords: 'C Em\nF G\nC Em\nF G' , 'bpm': '' },
-  { id: 3, title: 'Oceans', artist: 'Hillsong United', originalKey: 'D', chords: 'D A\nG Em\nD A\nG Em' , 'bpm': '' },
-]
 
 const newSong = ref<Omit<Song, 'id'>>({
   title: '',

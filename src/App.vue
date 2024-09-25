@@ -148,7 +148,7 @@
   </template>
   
   <script setup lang="ts">
-  import LoginForm from './components/LoginForm.vue'; 
+  import LoginForm from './components/LoginForm.vue'
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus } from 'lucide-vue-next'
   
@@ -166,11 +166,6 @@
 const handleLogin = () => {
   isLoggedIn.value = true;
   localStorage.setItem('isLoggedIn', 'true');
-};
-
-const handleLogout = () => {
-  isLoggedIn.value = false;
-  localStorage.removeItem('isLoggedIn');
 };
 
   const musicKeys = [
