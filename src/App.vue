@@ -1,6 +1,6 @@
 <template>
-    <div :class="{ 'dark': isDarkMode }" class="flex h-screen bg-light dark:bg-dark">
-        <LoginForm v-if="!isLoggedIn" @login="handleLogin" />
+  <div :class="{ 'dark': isDarkMode }" class="flex h-screen bg-light dark:bg-dark">
+    <LoginForm v-if="!isLoggedIn" @login="handleLogin" />
     <template v-else>
       <!-- Sidebar -->
       <div class="w-20 bg-sidebar text-white flex flex-col items-center py-4">
@@ -8,10 +8,10 @@
           <Music :size="32" />
         </div>
         <nav class="flex flex-col items-center space-y-4 flex-grow">
-          <SidebarButton>
+          <SidebarButton @click="currentView = 'main'">
             <Search :size="24" />
           </SidebarButton>
-          <SidebarButton>
+          <SidebarButton @click="currentView = 'playlist'">
             <List :size="24" />
           </SidebarButton>
           <SidebarButton @click="showAddSongModal = true">
@@ -46,27 +46,38 @@
         </header>
   
         <!-- Song list and details -->
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div v-if="currentView === 'main'" class="flex-1 flex flex-col md:flex-row overflow-hidden">
           <!-- Song list -->
           <div :class="{'md:w-1/2': selectedSong && isWideScreen}" class="flex-1 overflow-y-auto p-4">
             <div class="space-y-4">
-              <div v-for="song in visibleSongList" :key="song.id" 
+              <div v-for="song in visibleSongList" :key="song._id" 
                    @click="selectSong(song)"
-                   class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition">
+                   class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition relative group">
                 <div class="flex justify-between items-center">
                   <div>
-                    <h2 class="ext-lg font-semibold text-card-title">{{ song.title }}</h2>
+                    <h2 class="text-lg font-semibold text-card-title">{{ song.title }}</h2>
                     <p class="text-card-subtitle">{{ song.artist }}</p>
                   </div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-sm text-card-info">Key: {{ song.originalKey }}</span>
-                    <ChevronRight v-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
-                    <ChevronUp v-else-if="!isWideScreen && expandedSong === song.id" :size="20" class="text-card-icon" />
-                <ChevronDown v-else-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
-                  </div>
+                  <!-- <div class="flex items-center space-x-2">
+                    <span class="text-sm text-card-info">{{ song.originalKey }}</span> -->
+                    <div class="flex items-center space-x-2">
+              <button 
+                @click.stop="addToPlaylist(song)" 
+                class="text-primary hover:text-primary-hover opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-bumble rounded-full"
+              >
+                <Plus :size="16" />
+              </button>
+              <span class="key-display">{{ song.originalKey }}</span>
+              <button class="text-card-icon p-1 bg-bumble rounded-full">
+                <ChevronDown :size="16" />
+              </button>
+            </div>
+                    <!-- <ChevronRight v-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
+                    <ChevronUp v-else-if="!isWideScreen && expandedSong === song._id" :size="20" class="text-card-icon" />
+                    <ChevronDown v-else-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" /> -->
                 </div>
                 <!-- Mobile view: expandable content -->
-                <div v-if="!isWideScreen && expandedSong === song.id" class="bg-header mt-4 p-4 rounded">
+                <div v-if="!isWideScreen && expandedSong === song._id" class="bg-header mt-4 p-4 rounded">
                   <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
                   <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre>
                 </div>
@@ -88,6 +99,25 @@
             </div>
             <h3 class="text-lg font-semibold mb-2 text-card-title">Chords:</h3>
             <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle bg-light dark:bg-dark p-4 rounded">{{ selectedSong.chords }}</pre>
+          </div>
+        </div>
+
+        <!-- Playlist view -->
+        <div v-else-if="currentView === 'playlist'" class="flex-1 overflow-y-auto p-4">
+          <h2 class="text-2xl font-bold mb-4 text-card-title">My Playlist</h2>
+          <div class="space-y-4">
+            <div v-for="song in playlist" :key="song._id" 
+                 class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="text-lg font-semibold text-card-title">{{ song.title }}</h3>
+                  <p class="text-card-subtitle">{{ song.artist }}</p>
+                </div>
+                <button @click="removeFromPlaylist(song._id)" class="text-red-500 hover:text-red-700">
+                  <Trash2 :size="20" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -149,11 +179,12 @@
   
   <script setup lang="ts">
   import LoginForm from './components/LoginForm.vue'
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import axios from 'axios'
+  import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus, Trash2 } from 'lucide-vue-next'
   
   interface Song {
-    id: number;
+    _id: number;
     title: string;
     artist: string;
     originalKey: string;
@@ -172,6 +203,9 @@ const handleLogin = () => {
     'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
   ]
   
+  const currentView = ref('main')
+  const playlist = ref<Song[]>([])
+  const songs = ref<Song[]>([]);
   const selectedSong = ref<Song | null>(null)
   const expandedSong = ref<number | null>(null)
   const isWideScreen = ref(window.innerWidth >= 768)
@@ -179,227 +213,7 @@ const handleLogin = () => {
   const showAddSongModal = ref(false)
   const searchTerm = ref("")
   
-  const songs2 = ref<Song[]>([
-    {
-        "id":1,
-        "title": "Nothing is impossible",
-        "artist":"Planetshakers",
-        "bpm":"128",
-        "originalKey":"C",
-        "chords": "Chorus: xyz C G Am F // xyz Interlude: xyz F C Dm F // xyz Verse: xyz C Dm F xyz Am G F xyz Pre-Chorus: xyz Am G F xyz Am G Dm F xyz Bridge: xyz F C Dm F //"
-    },
-    {
-        "id":2,
-        "title": "Обійми мене",
-        "artist":"Океан Ельзи",
-        "bpm":"80",
-        "originalKey":"D#",
-        "chords": "Interlude: xyz G7 F G7 F D# Cm xyz Verse: xyz Cm Gm G# Gm xyz Cm Gm G# G7 xyz Chorus: xyz Cm Gm G# G7"
-    },
-    {
-        "id":3,
-        "title": "Behind Blue Eyes",
-        "artist":"Limp Bizkit",
-        "bpm":"90",
-        "originalKey":"D",
-        "chords": "Verse: xyz Em G D C A // xyz Chorus: xyz C D G C D E xyz Bm C D A" 
-    },
-    {
-        "id":4,
-        "title": "Poker Face",
-        "artist":"Lady Gaga",
-        "originalKey":"B",
-        "bpm":"-",
-        "chords": "Verse: xyz G#m E B A#m //// xyz Chorus: xyz G#m E B A#m //" 
-    },
-    {
-        "id":5,
-        "title": "Stefania",
-        "artist":"KALUSH",
-        "originalKey":"F",
-        "bpm":"-",
-        "chords": "Verse: xyz Dm A# A // xyz Chorus: xyz A# Gm A Dm //// xyz Interlude: xyz A# Gm A Dm A5 A#" 
-    },
-    {
-        "id":6,
-        "title": "Kamsahamnida",
-        "artist":"planetboom",
-        "originalKey":"G#m",
-        "bpm":"156",
-        "chords": "Verse: xyz G#m /// F#m //// xyz Chorus: xyz E G#m C#m B // xyz G#m /// xyz Interlude: xyz E G#m C#m B xyz Bridge: xyz G#m E F# //" 
-    },
-    {
-        "id":7,
-        "title": "Blessing",
-        "artist":"Kari Jobe",
-        "bpm":"-",
-        "originalKey":"H",
-        "chords": "Verse: xyz H E H F#sus xyz G#m E H F#m H xyz Chorus: xyz G#m E H F# //// xyz Interlude: xyz G#m E H F#" 
-    },
-    {
-        "id":8,
-        "title": "Promise",
-        "artist":"Spoken",
-        "bpm":"-",
-        "originalKey": "-",
-        "chords": "Empty" 
-    },
-    {
-        "id":9,
-        "title": "Just Like Heaven",
-        "artist":"Brandon Lake",
-        "bpm":"-",
-        "originalKey": "-",
-        "chords": "-"
-    },
-    {
-        "id":10,
-        "title": "Я буду славить Господа Христа",
-        "artist":"Сергей Брикса",
-        "bpm":"-",
-        "originalKey":"G",
-        "chords": "Intro: xyz G D C D xyz Verse: xyz G D C D xyz Em C Am xyz D C D xyz Chorus: xyz G D Em C xyz G D C D" 
-    },
-    {
-        "id":11,
-        "title": "Наш Бог благ и милостив",
-        "artist":"Новое Поколение",
-        "bpm":"",
-        "originalKey":"G",
-        "chords": "Verse: xyz Em C Am D // xyz G D C D // xyz Chorus: xyz G D Em C" 
-    },
-    {
-        "id":12,
-        "title": "Put Your Hands Up",
-        "artist":"Planetshakers",
-        "bpm":"124",
-        "originalKey":"C#",
-        "chords": "Verse: xyz A#m G# C# F# //// xyz Pre-Chorus: xyz A#m G# C# F# xyz A#m G# F# xyz Chorus: xyz A#m F# C# G# /// xyz C# F# A#m G# xyz Bridge: xyz C#m ////" 
-    },
-    {
-        "id":13,
-        "title": "Прихожу к Тебе я с хвалою",
-        "artist":"JoyYouth Worship",
-        "bpm":"",
-        "originalKey":"H",
-        "chords": "Verse: xyz H G#m E F# // xyz Chorus: xyz H F# G#m xyz F# E" 
-    },
-    {
-        "id":14,
-        "title": "Holy Spirit",
-        "artist":"Jesus Culture",
-        "bpm":"72",
-        "originalKey":"C",
-        "chords": "Verse: xyz C F2 //// xyz Chorus: xyz C F2 Dm7 // xyz Bridge: xyz F2 C Dm7 C" 
-    },
-    {
-        "id":15,
-        "title": "Way Maker",
-        "artist":"Leeland",
-        "bpm":"",
-        "originalKey":"A",
-        "chords": "Verse: xyz Chorus: xyz Bridge: xyz A2 E Hsus C#m" 
-    },
-    {
-        "id":16,
-        "title": "Этот день сотворил Господь",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"G",
-        "chords": "Verse: xyz G G C D // xyz Chorus: xyz G B C D" 
-    },
-    {
-        "id":17,
-        "title": "Ты моя защита",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"G",
-        "chords": "Verse: xyz Em Am G D C Em // xyz Chorus: xyz Am G D /// xyz Em D C Em" 
-    },
-    {
-        "id":18,
-        "title": "Вся хвала тобі Господь",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"D",
-        "chords": "Verse: xyz Chorus: xyz Bridge: xyz D Hm G A D" 
-    },
-    {
-        "id":19,
-        "title": "Господь, Ты Пастырь мой",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"Am",
-        "chords": "Verse: xyz Am Dm G C Am Dm E" 
-    },
-    {
-        "id":20,
-        "title": "Holy and Anointed One",
-        "artist":"Bethel",
-        "bpm":"",
-        "originalKey":"E",
-        "chords": "Verse: xyz E H A /// xyz E H C#m A xyz E H A xyz Chorus: xyz A E // xyz A C#m xyz A H xyz Bridge: xyz A E H" 
-    },
-    {
-        "id":21,
-        "title": "My Redeemer lives",
-        "artist":"Hillsong",
-        "bpm":"",
-        "originalKey":"E",
-        "chords": "Verse: xyz E A //// xyz H A A H xyz Chorus: xyz E A C#m H" 
-    },
-    {
-        "id":22,
-        "title": "Вечно буду славить",
-        "artist":"Виталий Ефремочкин",
-        "bpm":"",
-        "originalKey":"E",
-        "chords": "Verse: xyz C#m H /// xyz A H xyz Chorus: xyz C#m A H F#m xyz Bridge: xyz C#m H E F#m" 
-    },
-    {
-        "id":23,
-        "title": "Yeshua",
-        "artist":"Jesus Image",
-        "bpm":"",
-        "originalKey":"A#",
-        "chords": "Verse: xyz Dm A# F C xyz Chorus: xyz A# C Dm Am xyz Bridge: xyz A# C Dm Am" 
-    },
-    {
-        "id":24,
-        "title": "О, Благодать",
-        "artist":"4UBand",
-        "bpm":"",
-        "originalKey":"D",
-        "chords": "Verse: xyz D A G A // xyz Chorus: xyz Hm G D A xyz Bridge: xyz  D A Hm G" 
-    },
-    {
-        "id":25,
-        "title": "Досконалий Бог",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"Em",
-        "chords": "Verse: xyz Em D C H xyz G D Am H xyz Pre-Chorus: xyz C Am H // xyz Chorus: xyz Em G Am H //" 
-    },
-    {
-        "id":26,
-        "title": "Очи мои к горам",
-        "artist":"Unknown",
-        "bpm":"",
-        "originalKey":"E",
-        "chords": "Verse: xyz C#m A H G# // xyz Chorus: xyz C#m A H xyz Bridge: xyz C#m H" 
-    },
-    {
-        "id":27,
-        "title": "Нехай лине Дух",
-        "artist":"Unknown",
-        "bpm":"-",
-        "originalKey":"F",
-        "chords": "Verse: xyz Dm C //// xyz Gm C Dm C Dm xyz Chorus: xyz Gm C Dm" 
-    }
-
-])
-  
-  const newSong = ref<Omit<Song, 'id'>>({
+  const newSong = ref<Omit<Song, '_id'>>({
     title: '',
     artist: '',
     originalKey: '',
@@ -407,18 +221,61 @@ const handleLogin = () => {
     bpm: '',
   })
   
-  const addNewSong = () => {
-    if (isFormValid.value) {
-      const songToAdd: Song = {
-        ...newSong.value,
-        id: Date.now(),
-      }
-      songs2.value.push(songToAdd)
-      resetForm()
-      showAddSongModal.value = false
-      alert('New song added successfully!')
+  const addToPlaylist = (song: Song) => {
+
+if (!playlist.value.some(s => s._id === song._id)) {
+
+  playlist.value.push(song)
+
+  localStorage.setItem('playlist', JSON.stringify(playlist.value))
+
+}
+
+}
+
+
+
+const removeFromPlaylist = (songId: number) => {
+
+playlist.value = playlist.value.filter(song => song._id !== songId)
+
+localStorage.setItem('playlist', JSON.stringify(playlist.value))
+
+}
+
+// Функції для роботи з API
+const fetchSongs = async () => {
+  try {
+    console.log('Fetching songs...');
+    const response = await axios.get('/api/songs');
+    console.log('Raw response:', response);
+    console.log('Response data:', response.data);
+    if (Array.isArray(response.data)) {
+      songs.value = response.data;
+      console.log('Songs updated:', songs.value);
+    } else {
+      console.error('Unexpected response format:', response.data);
+    }
+  } catch (error) {
+    console.error('Error fetching songs:', error);
+  }
+};
+
+const addNewSong = async () => {
+  if (isFormValid.value) {
+    try {
+      const response = await axios.post('/api/songs', newSong.value);
+      songs.value.push(response.data);
+      resetForm();
+      showAddSongModal.value = false;
+      alert('New song added successfully!');
+    } catch (error) {
+      console.error('Error adding new song:', error);
+      alert('Failed to add new song. Please try again.');
     }
   }
+};
+
   
   const cancelAddSong = () => {
     resetForm()
@@ -455,13 +312,13 @@ const handleLogin = () => {
     )
   }
   
-  const visibleSongList = computed(() => searchEmp(songs2.value, searchTerm.value))
+  const visibleSongList = computed(() => searchEmp(songs.value, searchTerm.value))
   
   const selectSong = (song: Song) => {
     if (isWideScreen.value) {
       selectedSong.value = song
     } else {
-      expandedSong.value = expandedSong.value === song.id ? null : song.id
+      expandedSong.value = expandedSong.value === song._id ? null : song._id
     }
   }
   
@@ -478,6 +335,16 @@ const handleLogin = () => {
     const loggedIn = localStorage.getItem('isLoggedIn');
   if (loggedIn === 'true') {
     isLoggedIn.value = true;
+    fetchSongs();
+  }
+  // Load playlist from localStorage
+
+  const savedPlaylist = localStorage.getItem('playlist')
+
+  if (savedPlaylist) {
+
+    playlist.value = JSON.parse(savedPlaylist)
+
   }
     window.addEventListener('resize', handleResize)
     const savedTheme = localStorage.getItem('darkMode')
@@ -488,6 +355,15 @@ const handleLogin = () => {
     }
   })
 
+  // Автоматичне оновлення при зміні даних
+watch(songs, () => {
+  if (selectedSong.value) {
+    const updatedSong = songs.value.find(song => song._id === selectedSong.value?._id);
+    if (updatedSong) {
+      selectedSong.value = updatedSong;
+    }
+  }
+}, { deep: true });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
@@ -558,4 +434,28 @@ onUnmounted(() => {
 /* Utility класи */
 .bg-primary { background-color: var(--color-primary); }
 .bg-primary-dark { background-color: var(--color-primary-hover); }
+
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.key-display {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 2.8rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background-color: var(--color-bumble);
+  border-radius: 9999px;
+}
   </style>
