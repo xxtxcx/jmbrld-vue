@@ -1,7 +1,7 @@
 const { MONGODB_URI } = process.env.MONGODB_URI;
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
-const client = new MongoClient(uri, {
+const client = new MongoClient(MONGODB_URI, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
