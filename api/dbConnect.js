@@ -18,7 +18,7 @@
 
 //import { MongoClient } from 'mongodb';
 
-const { MONGODB_URI } = process.env;
+const { MONGODB_URI } = process.env.MONGODB_URI;
 
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = "mongodb+srv://atata426:Uv1Jo4R85Ag9RAWe@jmbrld.zbxwy.mongodb.net/?retryWrites=true&w=majority&appName=jmbrld";
