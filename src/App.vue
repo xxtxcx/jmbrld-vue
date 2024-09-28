@@ -389,7 +389,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 200px; /* або інший розмір за вашим вибором */
+  width: 400px; /* або інший розмір за вашим вибором */
   z-index: 1000;
 }
 
