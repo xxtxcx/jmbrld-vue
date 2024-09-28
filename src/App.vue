@@ -3,107 +3,42 @@
     <LoginForm v-if="!isLoggedIn" @login="handleLogin" />
     <template v-else>
       <!-- Sidebar -->
-      <div class="w-20 bg-sidebar text-white flex flex-col items-center py-4">
-        <div class="mb-8">
-          <Music :size="32" />
-        </div>
-        <nav class="flex flex-col items-center space-y-4 flex-grow">
-          <SidebarButton @click="currentView = 'main'">
-            <Search :size="24" />
-          </SidebarButton>
-          <SidebarButton @click="currentView = 'playlist'">
-            <List :size="24" />
-          </SidebarButton>
-          <SidebarButton @click="showAddSongModal = true">
-            <Plus :size="24" />
-          </SidebarButton>
-          <SidebarButton>
-            <Settings :size="24" />
-          </SidebarButton>
-        </nav>
-        <!-- Theme toggle button -->
-        <SidebarButton @click="toggleTheme" class="mt-auto mb-4">
-          <Sun v-if="isDarkMode" :size="24" />
-          <Moon v-else :size="24" />
-        </SidebarButton>
-      </div>
+      <Sidebar 
+        :isDarkMode="isDarkMode" 
+        @changeView="currentView = $event"
+        @showAddSongModal="showAddSongModal = true"
+        @toggleTheme="toggleTheme"
+      />
   
       <!-- Main content -->
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Header with search -->
-        <header class="bg-header shadow p-4 flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-primary">JMBRLD</h1>
-          <div class="relative w-64">
-            <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Search songs..."
-              class="w-full pl-10 pr-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-primary bg-input text-input-text border-input-border"
-              @input="onUpdateSearch"
-            >
-            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-input-icon" :size="20" />
-          </div>
-        </header>
-  
+         
+        <Header @updateSearch="onUpdateSearch" /> 
         <!-- Song list and details -->
         <div v-if="currentView === 'main'" class="flex-1 flex flex-col md:flex-row overflow-hidden">
           <!-- Song list -->
           <div :class="{'md:w-1/2': selectedSong && isWideScreen}" class="flex-1 overflow-y-auto p-4">
-            <div class="space-y-4">
-              <div v-for="song in visibleSongList" :key="song._id" 
-                   @click="selectSong(song)"
-                   class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition relative group">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <h2 class="text-lg font-semibold text-card-title">{{ song.title }}</h2>
-                    <p class="text-card-subtitle">{{ song.artist }}</p>
-                  </div>
-                  <!-- <div class="flex items-center space-x-2">
-                    <span class="text-sm text-card-info">{{ song.originalKey }}</span> -->
-                    <div class="flex items-center space-x-2">
-              <button 
-                @click.stop="addToPlaylist(song)" 
-                class="text-primary hover:text-primary-hover opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-bumble rounded-full"
-              >
-                <Plus :size="16" />
-              </button>
-              <span class="key-display">{{ song.originalKey }}</span>
-              <button class="text-card-icon p-1 bg-bumble rounded-full">
-                <ChevronDown :size="16" />
-              </button>
-            </div>
-                    <!-- <ChevronRight v-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" />
-                    <ChevronUp v-else-if="!isWideScreen && expandedSong === song._id" :size="20" class="text-card-icon" />
-                    <ChevronDown v-else-if="isWideScreen && expandedSong" :size="20" class="text-card-icon" /> -->
-                </div>
-                <!-- Mobile view: expandable content -->
-                <div v-if="!isWideScreen && expandedSong === song._id" class="bg-header mt-4 p-4 rounded">
-                  <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
-                  <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre>
-                </div>
-              </div>
-            </div>
+            <SongList 
+              :songs="visibleSongList"
+              :expandedSong="expandedSong"
+              :isWideScreen="isWideScreen"
+              @selectSong="selectSong($event, isWideScreen)"
+              @addToPlaylist="addToPlaylist"
+            />
           </div>
   
           <!-- Song details for wide screens -->
-          <div v-if="selectedSong && isWideScreen" class="md:w-1/2 bg-header overflow-y-auto p-6 border-l border-input-border">
-            <h2 class="text-2xl font-bold mb-2 text-card-title">{{ selectedSong.title }}</h2>
-            <p class="text-xl text-card-subtitle mb-4">{{ selectedSong.artist }}</p>
-            <div class="mb-6">
-              <span class="inline-block bg-bumble rounded-full px-3 py-1 text-sm font-semibold text-card-subtitle mr-2">
-                Key: {{ selectedSong.originalKey }}
-              </span>
-              <span class="inline-block bg-bumble rounded-full px-3 py-1 text-sm font-semibold text-card-subtitle">
-                BPM: {{ selectedSong.bpm }}
-              </span>
-            </div>
-            <h3 class="text-lg font-semibold mb-2 text-card-title">Chords:</h3>
-            <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle bg-light dark:bg-dark p-4 rounded">{{ selectedSong.chords }}</pre>
-          </div>
+          <SongDetails 
+            v-if="selectedSong && isWideScreen"
+            :song="selectedSong"
+            class="md:w-1/2"
+          />
         </div>
 
         <!-- Playlist view -->
-        <div v-else-if="currentView === 'playlist'" class="flex-1 overflow-y-auto p-4">
+        <MultiPlaylistComponent ref="playlistComponent" v-if="currentView === 'playlist'" />
+        <!-- <div v-else-if="currentView === 'playlist'" class="flex-1 overflow-y-auto p-4">
           <h2 class="text-2xl font-bold mb-4 text-card-title">My Playlist</h2>
           <div class="space-y-4">
             <div v-for="song in playlist" :key="song._id" 
@@ -119,7 +54,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
   
       <!-- Add Song Modal -->
@@ -163,7 +98,7 @@
           Cancel
         </button>
         <button 
-          @click="addNewSong" 
+          @click="handleAddNewSong"
           :disabled="!isFormValid" 
           class="px-6 py-3 bg-primary text-white rounded hover:bg-primary-hover transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -179,10 +114,27 @@
   
   <script setup lang="ts">
   import LoginForm from './components/LoginForm.vue'
+  import Sidebar from './components/Sidebar.vue'
+  import Header from './components/Header.vue'
+  import SongList from './components/SongList.vue'
+  import SongDetails from './components/SongDetails.vue'
+  import { useSongs } from './composables/useSongs'
+import MultiPlaylistComponent from './components/MultiPlaylistComponent.vue'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
   import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus, Trash2 } from 'lucide-vue-next'
-  
+
+  const {
+  songs,
+  selectedSong,
+  expandedSong,
+  searchTerm,
+  visibleSongList,
+  fetchSongs,
+  addNewSong,
+  selectSong,
+} = useSongs()
+
   interface Song {
     _id: number;
     title: string;
@@ -205,13 +157,9 @@ const handleLogin = () => {
   
   const currentView = ref('main')
   const playlist = ref<Song[]>([])
-  const songs = ref<Song[]>([]);
-  const selectedSong = ref<Song | null>(null)
-  const expandedSong = ref<number | null>(null)
   const isWideScreen = ref(window.innerWidth >= 768)
   const isDarkMode = ref(false)
   const showAddSongModal = ref(false)
-  const searchTerm = ref("")
   
   const newSong = ref<Omit<Song, '_id'>>({
     title: '',
@@ -221,62 +169,37 @@ const handleLogin = () => {
     bpm: '',
   })
   
-  const addToPlaylist = (song: Song) => {
+  const playlistComponent = ref<InstanceType<typeof MultiPlaylistComponent> | null>(null)
 
-if (!playlist.value.some(s => s._id === song._id)) {
-
-  playlist.value.push(song)
-
-  localStorage.setItem('playlist', JSON.stringify(playlist.value))
-
+const addToPlaylist = (song: Song) => {
+  playlistComponent.value?.addToLocalPlaylist(song)
 }
 
-}
+//   const addToPlaylist = (song: Song) => {
 
+// if (!playlist.value.some(s => s._id === song._id)) {
 
+//   playlist.value.push(song)
 
-const removeFromPlaylist = (songId: number) => {
+//   localStorage.setItem('playlist', JSON.stringify(playlist.value))
 
-playlist.value = playlist.value.filter(song => song._id !== songId)
+// }
 
-localStorage.setItem('playlist', JSON.stringify(playlist.value))
+// }
 
-}
-
-// Функції для роботи з API
-const fetchSongs = async () => {
-  try {
-    console.log('Fetching songs...');
-    const response = await axios.get('/api/songs');
-    console.log('Raw response:', response);
-    console.log('Response data:', response.data);
-    if (Array.isArray(response.data)) {
-      songs.value = response.data;
-      console.log('Songs updated:', songs.value);
-    } else {
-      console.error('Unexpected response format:', response.data);
-    }
-  } catch (error) {
-    console.error('Error fetching songs:', error);
-  }
-};
-
-const addNewSong = async () => {
+const handleAddNewSong = async () => {
   if (isFormValid.value) {
-    try {
-      const response = await axios.post('/api/songs', newSong.value);
-      songs.value.push(response.data);
-      resetForm();
-      showAddSongModal.value = false;
-      alert('New song added successfully!');
-    } catch (error) {
-      console.error('Error adding new song:', error);
-      alert('Failed to add new song. Please try again.');
+    const success = await addNewSong(newSong.value)
+    if (success) {
+      resetForm()
+      showAddSongModal.value = false
+      alert('New song added successfully!')
+    } else {
+      alert('Failed to add new song. Please try again.')
     }
   }
-};
-
-  
+}
+ 
   const cancelAddSong = () => {
     resetForm()
     showAddSongModal.value = false
@@ -298,29 +221,9 @@ const addNewSong = async () => {
            newSong.value.originalKey !== ''
   })
   
-  const onUpdateSearch = (event: Event) => {
-    searchTerm.value = (event.target as HTMLInputElement).value
-  }
-  
-  const searchEmp = (items: Song[], term: string) => {
-    if (term.length === 0) {
-      return items
-    }
-    return items.filter(item => 
-      item.title.toLowerCase().includes(term.toLowerCase()) ||
-      item.artist.toLowerCase().includes(term.toLowerCase())
-    )
-  }
-  
-  const visibleSongList = computed(() => searchEmp(songs.value, searchTerm.value))
-  
-  const selectSong = (song: Song) => {
-    if (isWideScreen.value) {
-      selectedSong.value = song
-    } else {
-      expandedSong.value = expandedSong.value === song._id ? null : song._id
-    }
-  }
+  const onUpdateSearch = (term: string) => {
+  searchTerm.value = term
+}
   
   const toggleTheme = () => {
     isDarkMode.value = !isDarkMode.value
@@ -341,11 +244,11 @@ const addNewSong = async () => {
 
   const savedPlaylist = localStorage.getItem('playlist')
 
-  if (savedPlaylist) {
+  // if (savedPlaylist) {
 
-    playlist.value = JSON.parse(savedPlaylist)
+  //   playlist.value = JSON.parse(savedPlaylist)
 
-  }
+  // }
     window.addEventListener('resize', handleResize)
     const savedTheme = localStorage.getItem('darkMode')
     if (savedTheme !== null) {
@@ -356,14 +259,14 @@ const addNewSong = async () => {
   })
 
   // Автоматичне оновлення при зміні даних
-watch(songs, () => {
-  if (selectedSong.value) {
-    const updatedSong = songs.value.find(song => song._id === selectedSong.value?._id);
-    if (updatedSong) {
-      selectedSong.value = updatedSong;
-    }
-  }
-}, { deep: true });
+// watch(songs, () => {
+//   if (selectedSong.value) {
+//     const updatedSong = songs.value.find(song => song._id === selectedSong.value?._id);
+//     if (updatedSong) {
+//       selectedSong.value = updatedSong;
+//     }
+//   }
+// }, { deep: true });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
