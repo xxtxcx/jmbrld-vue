@@ -1,5 +1,6 @@
 <template>
-  <div :class="{ 'dark': isDarkMode }" class="flex h-screen bg-light dark:bg-dark">
+  <div id="app" :class="{ 'dark': isDarkMode }" class="flex h-screen bg-light dark:bg-dark"
+  @touchstart="handleTouch">
     <LoginForm v-if="!isLoggedIn" @login="handleLogin" />
     <template v-else>
       <!-- Sidebar -->
@@ -14,7 +15,7 @@
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Header with search -->
          
-        <Header @updateSearch="onUpdateSearch" /> 
+        <Header :searchTerm="searchTerm" @updateSearch="updateSearch" @activateEasterEgg="showSashaFronch"/>
         <!-- Song list and details -->
         <div v-if="currentView === 'main'" class="flex-1 flex flex-col md:flex-row overflow-hidden">
           <!-- Song list -->
@@ -37,7 +38,7 @@
         </div>
 
         <!-- Playlist view -->
-        <MultiPlaylistComponent ref="playlistComponent" v-if="currentView === 'playlist'" />
+        <Playlists v-if="currentView === 'playlist'" />
         <!-- <div v-else-if="currentView === 'playlist'" class="flex-1 overflow-y-auto p-4">
           <h2 class="text-2xl font-bold mb-4 text-card-title">My Playlist</h2>
           <div class="space-y-4">
@@ -58,7 +59,7 @@
       </div>
   
       <!-- Add Song Modal -->
-<Teleport to="body">
+<!-- <Teleport to="body">
   <div :class="{ 'dark': !isDarkMode }" v-if="showAddSongModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-card rounded-lg p-8 w-full max-w-2xl shadow-xl">
       <div class="flex justify-between items-center mb-6">
@@ -107,9 +108,23 @@
       </div>
     </div>
   </div>
-</Teleport>
+</Teleport> -->
+<AddSongModal 
+        :show="showAddSongModal"
+        :isDarkMode="isDarkMode"
+        @close="showAddSongModal = false"
+        @addSong="handleAddNewSong"
+      />
 </template>
-    </div>
+    <div class="secret-area top-right"></div>
+    <div class="secret-area bottom-right"></div>
+    <div class="secret-area center-left"></div>
+    <transition name="slide-up">
+      <div v-if="showSashaFronchImage" class="sasha-fronch-image">
+        <img src="/src//assets/sf.png" alt="Саша Фронч" />
+      </div>
+    </transition>
+  </div>
   </template>
   
   <script setup lang="ts">
@@ -118,14 +133,13 @@
   import Header from './components/Header.vue'
   import SongList from './components/SongList.vue'
   import SongDetails from './components/SongDetails.vue'
+  import AddSongModal from './components/AddSongModal.vue'
+  import Playlists from './components/Playlists.vue'
   import { useSongs } from './composables/useSongs'
-import MultiPlaylistComponent from './components/MultiPlaylistComponent.vue'
+  import { usePlaylist } from './composables/usePlaylist'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import axios from 'axios'
-  import { Search, Music, List, Settings, ChevronDown, ChevronUp, ChevronRight, Sun, Moon, Plus, Trash2 } from 'lucide-vue-next'
 
   const {
-  songs,
   selectedSong,
   expandedSong,
   searchTerm,
@@ -133,10 +147,54 @@ import axios from 'axios'
   fetchSongs,
   addNewSong,
   selectSong,
+  updateSearch,
+  setSongs, originalSongs, songs
 } = useSongs()
 
+const secretCode = ['center-left', 'center-left', 'bottom-right', 'bottom-right', 'bottom-right', 'top-right', 'center-left',];
+let userInput: string[] = [];
+const showSashaFronchImage = ref(false);
+
+const handleTouch = (event: TouchEvent) => {
+  const touch = event.touches[0];
+  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (element?.classList.contains('secret-area')) {
+    const area = element.classList[1];
+    userInput.push(area);
+    if (userInput.length > secretCode.length) {
+      userInput.shift();
+    }
+    if (userInput.join(',') === secretCode.join(',')) {
+      activateRickRoll();
+    }
+  }
+};
+
+const showSashaFronch = () => {
+  showSashaFronchImage.value = true;
+  setTimeout(() => {
+    showSashaFronchImage.value = false;
+  }, 3000); // Зображення зникне через 3 секунди
+};
+
+const activateRickRoll = () => {
+  const rickRollSong = {
+    _id: 'rickroll',
+    title: 'Never Gonna Give You Up',
+    artist: 'Rick Astley',
+    originalKey: 'F',
+    chords: 'F G Am Dm',
+    bpm: '113'
+  };
+  originalSongs.value = [...songs.value];
+  setSongs(Array(songs.value.length).fill(rickRollSong));
+  setTimeout(() => {
+    setSongs(originalSongs.value);
+  }, 5000);
+};
+
   interface Song {
-    _id: number;
+    _id: string;
     title: string;
     artist: string;
     originalKey: string;
@@ -151,12 +209,7 @@ const handleLogin = () => {
   localStorage.setItem('isLoggedIn', 'true');
 };
 
-  const musicKeys = [
-    'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
-  ]
-  
   const currentView = ref('main')
-  const playlist = ref<Song[]>([])
   const isWideScreen = ref(window.innerWidth >= 768)
   const isDarkMode = ref(false)
   const showAddSongModal = ref(false)
@@ -169,60 +222,22 @@ const handleLogin = () => {
     bpm: '',
   })
   
-  const playlistComponent = ref<InstanceType<typeof MultiPlaylistComponent> | null>(null)
+
+const { addSongToPlaylist } = usePlaylist()
 
 const addToPlaylist = (song: Song) => {
-  playlistComponent.value?.addToLocalPlaylist(song)
+  addSongToPlaylist(song._id)
+  alert(`Song "${song.title}" added to playlist`)
 }
 
-//   const addToPlaylist = (song: Song) => {
-
-// if (!playlist.value.some(s => s._id === song._id)) {
-
-//   playlist.value.push(song)
-
-//   localStorage.setItem('playlist', JSON.stringify(playlist.value))
-
-// }
-
-// }
-
-const handleAddNewSong = async () => {
-  if (isFormValid.value) {
-    const success = await addNewSong(newSong.value)
-    if (success) {
-      resetForm()
-      showAddSongModal.value = false
-      alert('New song added successfully!')
-    } else {
-      alert('Failed to add new song. Please try again.')
-    }
-  }
-}
- 
-  const cancelAddSong = () => {
-    resetForm()
+const handleAddNewSong = async (newSong: Omit<Song, '_id'>) => {
+  const success = await addNewSong(newSong)
+  if (success) {
     showAddSongModal.value = false
+    alert('New song added successfully!')
+  } else {
+    alert('Failed to add new song. Please try again.')
   }
-  
-  const resetForm = () => {
-    newSong.value = {
-      title: '',
-      artist: '',
-      originalKey: '',
-      chords: '',
-      bpm: '',
-    }
-  }
-  
-  const isFormValid = computed(() => {
-    return newSong.value.title.trim() !== '' && 
-           newSong.value.artist.trim() !== '' && 
-           newSong.value.originalKey !== ''
-  })
-  
-  const onUpdateSearch = (term: string) => {
-  searchTerm.value = term
 }
   
   const toggleTheme = () => {
@@ -240,15 +255,9 @@ const handleAddNewSong = async () => {
     isLoggedIn.value = true;
     fetchSongs();
   }
-  // Load playlist from localStorage
 
   const savedPlaylist = localStorage.getItem('playlist')
 
-  // if (savedPlaylist) {
-
-  //   playlist.value = JSON.parse(savedPlaylist)
-
-  // }
     window.addEventListener('resize', handleResize)
     const savedTheme = localStorage.getItem('darkMode')
     if (savedTheme !== null) {
@@ -257,16 +266,6 @@ const handleAddNewSong = async () => {
       isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
     }
   })
-
-  // Автоматичне оновлення при зміні даних
-// watch(songs, () => {
-//   if (selectedSong.value) {
-//     const updatedSong = songs.value.find(song => song._id === selectedSong.value?._id);
-//     if (updatedSong) {
-//       selectedSong.value = updatedSong;
-//     }
-//   }
-// }, { deep: true });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
@@ -360,5 +359,52 @@ onUnmounted(() => {
   color: var(--color-text);
   background-color: var(--color-bumble);
   border-radius: 9999px;
+}
+
+@media (max-width: 640px) {
+  .key-display {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+#app {
+  transition: transform 1s ease-in-out;
+}
+
+.secret-area {
+  position: absolute;
+  width: 7%;
+  height: 7%;
+  z-index: 1000;
+}
+
+.top-right { top: 0; right: 0; }
+.bottom-right { bottom: 0; right: 0; }
+.center-left { top: 40%; left: 0; }
+
+
+.sasha-fronch-image {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px; /* або інший розмір за вашим вибором */
+  z-index: 1000;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.5s ease-in-out;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%) translateX(-50%);
+}
+
+.slide-up-enter-to,
+.slide-up-leave-from {
+  transform: translateY(0) translateX(-50%);
 }
   </style>

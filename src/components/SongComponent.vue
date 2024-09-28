@@ -40,7 +40,7 @@
   import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next';
   
   interface Song {
-    _id: number;
+    _id: string;
     title: string;
     artist: string;
     originalKey: string;

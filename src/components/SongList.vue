@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-4">
       <div v-for="song in songs" :key="song._id" 
-           @click="selectSong(song)"
+            @click="$emit('selectSong', song)"
            class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition relative group">
         <div class="flex justify-between items-center">
           <div>
@@ -23,8 +23,10 @@
         </div>
         <!-- Mobile view: expandable content -->
         <div v-if="!isWideScreen && expandedSong === song._id" class="bg-header mt-4 p-4 rounded">
-          <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
-          <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre>
+          <h3 class="text-lg font-semibold mb-2 text-card-title">Chords:</h3>
+          <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle bg-light dark:bg-dark p-4 rounded">{{ song.chords }}</pre>
+          <!-- <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
+          <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre> -->
         </div>
       </div>
     </div>
@@ -34,7 +36,7 @@
   import { Plus, ChevronDown } from 'lucide-vue-next'
   
   interface Song {
-    _id: number;
+    _id: string;
     title: string;
     artist: string;
     originalKey: string;
@@ -42,18 +44,34 @@
     bpm: string;
   }
   
-  defineProps<{
+  const props = defineProps<{
     songs: Song[];
-    expandedSong: number | null;
+    expandedSong: string | null;
     isWideScreen: boolean;
   }>()
   
+  console.log('Songs in SongList:', props.songs)
+
   const emit = defineEmits<{
     (e: 'selectSong', song: Song): void;
     (e: 'addToPlaylist', song: Song): void;
+    (e: 'removeSong', song: Song): void;
   }>()
   
   const selectSong = (song: Song) => {
     emit('selectSong', song)
   }
   </script>
+  <style scoped>
+  .key-display {
+    @apply inline-flex justify-center items-center min-w-[2.8rem] h-6 font-semibold bg-bumble rounded-full;
+  }
+  
+  @media (max-width: 640px) {
+    .key-display {
+      min-width: 2.2rem;
+      height: 1.5rem;
+      font-size: 0.75rem;
+    }
+  }
+  </style>

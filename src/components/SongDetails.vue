@@ -17,7 +17,7 @@
   
   <script setup lang="ts">
   interface Song {
-    _id: number;
+    _id: string;
     title: string;
     artist: string;
     originalKey: string;

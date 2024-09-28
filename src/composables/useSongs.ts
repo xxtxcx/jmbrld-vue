@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 
 interface Song {
-  _id: number;
+  _id: string;
   title: string;
   artist: string;
   originalKey: string;
@@ -12,9 +12,14 @@ interface Song {
 
 export function useSongs() {
   const songs = ref<Song[]>([])
+  const originalSongs = ref<Song[]>([])
   const selectedSong = ref<Song | null>(null)
-  const expandedSong = ref<number | null>(null)
+  const expandedSong = ref<string | null>(null)
   const searchTerm = ref("")
+
+  const setSongs = (newSongs: Song[]) => {
+    songs.value = newSongs;
+  }
 
   const fetchSongs = async () => {
     try {
@@ -23,7 +28,10 @@ export function useSongs() {
       console.log('Raw response:', response)
       console.log('Response data:', response.data)
       if (Array.isArray(response.data)) {
-        songs.value = response.data
+        songs.value = response.data.filter(song => 
+          typeof song.title === 'string' && 
+          typeof song.artist === 'string'
+        )
         console.log('Songs updated:', songs.value)
       } else {
         console.error('Unexpected response format:', response.data)
@@ -35,22 +43,29 @@ export function useSongs() {
 
   const addNewSong = async (newSong: Omit<Song, '_id'>) => {
     try {
-      const response = await axios.post('/api/songs', newSong)
-      songs.value.push(response.data)
-      return true
+      console.log('Sending new song data:', newSong);
+      const response = await axios.post('/api/songs', newSong);
+      console.log('Server response:', response);
+      songs.value.push(response.data);
+      return true;
     } catch (error) {
-      console.error('Error adding new song:', error)
-      return false
+      console.error('Error adding new song:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+        console.error('Response status:', error.response?.status);
+        console.error('Response headers:', error.response?.headers);
+      }
+      return false;
     }
-  }
+  };
 
   const searchSongs = (items: Song[], term: string) => {
     if (term.length === 0) {
       return items
     }
     return items.filter(item => 
-      item.title.toLowerCase().includes(term.toLowerCase()) ||
-      item.artist.toLowerCase().includes(term.toLowerCase())
+      (item.title?.toLowerCase().includes(term.toLowerCase()) ?? false) ||
+      (item.artist?.toLowerCase().includes(term.toLowerCase()) ?? false)
     )
   }
 
@@ -64,8 +79,13 @@ export function useSongs() {
     }
   }
 
+  const updateSearch = (term: string) => {
+    searchTerm.value = term
+  }
+
   return {
     songs,
+    originalSongs,
     selectedSong,
     expandedSong,
     searchTerm,
@@ -73,5 +93,7 @@ export function useSongs() {
     fetchSongs,
     addNewSong,
     selectSong,
+    updateSearch,
+    setSongs,
   }
 }
