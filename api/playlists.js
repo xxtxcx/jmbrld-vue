@@ -51,46 +51,11 @@ export default async function handler(req, res) {
       }
       break;
 
-    case 'PUT':
-      try {
-        const { id } = req.query;
-        const updateData = req.body;
-        if (!id) {
-          return res.status(400).json({ error: "Missing playlist id" });
-        }
-        const result = await playlistsCollection.findOneAndUpdate(
-          { _id: new ObjectId(id) },
-          { $set: { ...updateData, updatedAt: new Date() } },
-          { returnDocument: 'after' }
-        );
-        if (result.value) {
-          res.status(200).json(result.value);
-        } else {
-          res.status(404).json({ error: "Playlist not found" });
-        }
-      } catch (error) {
-        console.error("Error in PUT /api/playlists:", error);
-        res.status(500).json({ error: error.message });
-      }
-      break;
-
-    case 'DELETE':
-      try {
-        const { id } = req.query;
-        if (!id) {
-          return res.status(400).json({ error: "Missing playlist id" });
-        }
-        const result = await playlistsCollection.deleteOne({ _id: new ObjectId(id) });
-        if (result.deletedCount) {
-          res.status(200).json({ message: "Playlist deleted successfully" });
-        } else {
-          res.status(404).json({ error: "Playlist not found" });
-        }
-      } catch (error) {
-        console.error("Error in DELETE /api/playlists:", error);
-        res.status(500).json({ error: error.message });
-      }
-      break;
+      case 'PUT':
+        case 'DELETE':
+          console.log(`Received ${req.method} request for playlist ${req.query.id}`);
+          res.status(200).json({ message: `${req.method} request received` });
+          break;
 
     default:
       res.status(405).end(); // Method Not Allowed

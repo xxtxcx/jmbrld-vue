@@ -25,8 +25,6 @@ export function useSongs() {
     try {
       console.log('Fetching songs...')
       const response = await axios.get('/api/songs')
-      console.log('Raw response:', response)
-      console.log('Response data:', response.data)
       if (Array.isArray(response.data)) {
         songs.value = response.data.filter(song => 
           typeof song.title === 'string' && 
