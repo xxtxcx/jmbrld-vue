@@ -39,76 +39,8 @@
 
         <!-- Playlist view -->
         <Playlists v-if="currentView === 'playlist'" />
-        <!-- <div v-else-if="currentView === 'playlist'" class="flex-1 overflow-y-auto p-4">
-          <h2 class="text-2xl font-bold mb-4 text-card-title">My Playlist</h2>
-          <div class="space-y-4">
-            <div v-for="song in playlist" :key="song._id" 
-                 class="bg-card rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition">
-              <div class="flex justify-between items-center">
-                <div>
-                  <h3 class="text-lg font-semibold text-card-title">{{ song.title }}</h3>
-                  <p class="text-card-subtitle">{{ song.artist }}</p>
-                </div>
-                <button @click="removeFromPlaylist(song._id)" class="text-red-500 hover:text-red-700">
-                  <Trash2 :size="20" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </div>
-  
-      <!-- Add Song Modal -->
-<!-- <Teleport to="body">
-  <div :class="{ 'dark': !isDarkMode }" v-if="showAddSongModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-card rounded-lg p-8 w-full max-w-2xl shadow-xl">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-card-title">Add New Song</h2>
-        <button @click="cancelAddSong" class="text-card-icon hover:text-primary transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-6 gap-6">
-        <div class="col-span-3">
-          <label for="title" class="block text-sm font-medium text-card-title mb-2">Title</label>
-          <input v-model="newSong.title" id="title" placeholder="Song Title" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
-        </div>
-        <div class="col-span-3">
-          <label for="artist" class="block text-sm font-medium text-card-title mb-2">Artist</label>
-          <input v-model="newSong.artist" id="artist" placeholder="Artist Name" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
-        </div>
-        <div class="col-span-2">
-          <label for="key" class="block text-sm font-medium text-card-title mb-2">Key</label>
-          <select v-model="newSong.originalKey" id="key" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
-            <option v-for="key in musicKeys" :key="key" :value="key">{{ key }}</option>
-          </select>
-        </div>
-        <div class="col-span-2">
-          <label for="bpm" class="block text-sm font-medium text-card-title mb-2">BPM</label>
-          <input v-model.number="newSong.bpm" id="bpm" type="number" min="50" max="150" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary">
-        </div>
-        <div class="col-span-6">
-          <label for="chords" class="block text-sm font-medium text-card-title mb-2">Chords</label>
-          <textarea v-model="newSong.chords" id="chords" rows="5" placeholder="Enter chords here" class="w-full p-3 rounded-md text-input-text focus:ring-primary focus:border-primary"></textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end mt-8 space-x-4">
-        <button @click="cancelAddSong" class="px-6 py-3 bg-card-expanded text-card-title rounded hover:bg-bumble transition-colors duration-300">
-          Cancel
-        </button>
-        <button 
-          @click="handleAddNewSong"
-          :disabled="!isFormValid" 
-          class="px-6 py-3 bg-primary text-white rounded hover:bg-primary-hover transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Add Song
-        </button>
-      </div>
-    </div>
-  </div>
-</Teleport> -->
+ 
 <AddSongModal 
         :show="showAddSongModal"
         :isDarkMode="isDarkMode"
@@ -137,6 +69,7 @@
   import Playlists from './components/Playlists.vue'
   import { useSongs } from './composables/useSongs'
   import { usePlaylist } from './composables/usePlaylist'
+  import mySong from './assets/rick.mp3'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
   const {
@@ -177,6 +110,16 @@ const showSashaFronch = () => {
   }, 3000); // Зображення зникне через 3 секунди
 };
 
+const audio = ref(new Audio(new URL('@/assets/rick.mp3', import.meta.url).href));
+
+const audioElement = ref<HTMLAudioElement | null>(null)
+
+const playSong = () => {
+  audio.value.play().catch((error) => {
+    console.error('Audio playback failed:', error);
+  });
+};
+
 const activateRickRoll = () => {
   const rickRollSong = {
     _id: 'rickroll',
@@ -186,6 +129,7 @@ const activateRickRoll = () => {
     chords: 'F G Am Dm',
     bpm: '113'
   };
+  playSong();
   originalSongs.value = [...songs.value];
   setSongs(Array(songs.value.length).fill(rickRollSong));
   setTimeout(() => {

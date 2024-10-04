@@ -28,6 +28,12 @@
           <!-- <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
           <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre> -->
         </div>
+        <div v-else-if="isWideScreen && expandedSong === song._id" class="bg-header mt-4 p-4 rounded">
+          <h3 class="text-lg font-semibold mb-2 text-card-title">Chords:</h3>
+          <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle bg-light dark:bg-dark p-4 rounded">{{ song.chords }}</pre>
+          <!-- <h3 class="font-semibold mb-2 text-card-title">Chords:</h3>
+          <pre class="whitespace-pre-wrap font-mono text-sm text-card-subtitle">{{ song.chords }}</pre> -->
+        </div>
       </div>
     </div>
   </template>

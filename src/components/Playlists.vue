@@ -1,35 +1,3 @@
-<!-- <template>
-  <div class="playlists-container">
-    <div class="playlist-tabs">
-      <button 
-        v-for="(playlist, index) in allPlaylists" 
-        :key="index"
-        @click="selectPlaylist(index)"
-        :class="{ 'active': selectedPlaylistIndex === index }"
-      >
-        {{ playlist.name }}
-        <span v-if="index !== 0" @click.stop="deletePlaylist(index)" class="delete-btn">×</span>
-      </button>
-    </div>
-
-    <SongList 
-      :songs="currentPlaylistSongs"
-      :expandedSong="expandedSong"
-      :isWideScreen="isWideScreen"
-      @selectSong="handleSelectSong"
-      @removeSong="handleRemoveSong"
-    />
-    {{ console.log('currentPlaylistSongs:', currentPlaylistSongs) }}
-
-    <button 
-      v-if="selectedPlaylistIndex === 0"
-      @click="saveLocalPlaylist" 
-      class="save-playlist-btn"
-    >
-      Save Local Playlist to Database
-    </button>
-  </div>
-</template> -->
 <template>
   <div class="playlists-container">
     <!-- Tabs for playlists -->
@@ -51,14 +19,16 @@
 
     <!-- Selected playlist songs -->
     <SongList 
-      v-if="hasPlaylists"
-      :songs="currentPlaylistSongs"
-      :expandedSong="expandedSong"
-      :isWideScreen="isWideScreen"
-      @selectSong="handleSelectSong"
-      @removeSong="handleRemoveSong"
-    />
-
+  v-if="hasPlaylists"
+  :songs="allPlaylists[selectedPlaylistIndex].songIds
+    .map(id => songs.find(s => s._id === id))
+    .filter((song): song is Song => song !== undefined)"
+  :expandedSong="expandedSong"
+  :isWideScreen="isWideScreen"
+  :showRemoveButton="true"
+  @selectSong="handleSelectSong"
+  @removeSong="handleRemoveSong"
+/>
     <!-- Save local playlist button -->
     <button 
       v-if="selectedPlaylistIndex === 0 && localPlaylistHasSongs"
@@ -107,6 +77,7 @@ const {
 } = toRefs(playlistStore)
 
 const expandedSong = ref<string | null>(null)
+const selectedSong = ref<Song | null>(null)
 const isWideScreen = ref(window.innerWidth >= 768)
 const showModal = ref(false)
 const newPlaylistName = ref('')
@@ -137,14 +108,10 @@ const hasPlaylists = computed(() => visiblePlaylists.value.length > 0)
 
 const localPlaylistHasSongs = computed(() => allPlaylists.value[0].songIds.length > 0)
 
-// const currentPlaylistSongs = computed(() => {
-//   if (!hasPlaylists.value) return []
-//   const currentPlaylist = visiblePlaylists.value[selectedPlaylistIndex.value]
-//   return songs.value.filter(song => currentPlaylist.songIds.includes(song._id))
-// })
 
 const handleSelectSong = (song: Song) => {
   expandedSong.value = expandedSong.value === song._id ? null : song._id
+  selectedSong.value = song
 }
 
 const handleRemoveSong = (song: Song) => {

@@ -102,6 +102,7 @@ export function usePlaylist() {
 
   const selectPlaylist = (index: number) => {
     selectedPlaylistIndex.value = index
+    console.log('Selected playlist index:', selectedPlaylistIndex.value)
   }
 
   // Fetch playlists on component mount
