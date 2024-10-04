@@ -5,6 +5,19 @@ const { db } = await connectToDatabase();
 const playlistsCollection = db.collection('playlists');
 
 export default async function handler(req, res) {
+  // Додаємо базові CORS заголовки
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+
+
+  // Обробка preflight запитів
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   switch (req.method) {
     case 'GET':
       try {
@@ -34,6 +47,29 @@ export default async function handler(req, res) {
         }
       } catch (error) {
         console.error("Error in POST /api/playlists:", error);
+        res.status(500).json({ error: error.message });
+      }
+      break;
+
+    case 'PUT':
+      try {
+        const { id } = req.query;
+        const updateData = req.body;
+        if (!id) {
+          return res.status(400).json({ error: "Missing playlist id" });
+        }
+        const result = await playlistsCollection.findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: { ...updateData, updatedAt: new Date() } },
+          { returnDocument: 'after' }
+        );
+        if (result.value) {
+          res.status(200).json(result.value);
+        } else {
+          res.status(404).json({ error: "Playlist not found" });
+        }
+      } catch (error) {
+        console.error("Error in PUT /api/playlists:", error);
         res.status(500).json({ error: error.message });
       }
       break;

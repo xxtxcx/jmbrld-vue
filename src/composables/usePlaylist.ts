@@ -50,17 +50,26 @@ export function usePlaylist() {
     }
   }
 
-  const removeSongFromPlaylist = (songId: string, playlistIndex: number = selectedPlaylistIndex.value) => {
+  const removeSongFromPlaylist = async (songId: string, playlistIndex: number) => {
     if (playlistIndex >= 0 && playlistIndex < allPlaylists.value.length) {
-      allPlaylists.value[playlistIndex] = {
+      const updatedPlaylist = {
         ...allPlaylists.value[playlistIndex],
         songIds: allPlaylists.value[playlistIndex].songIds.filter(id => id !== songId),
         updatedAt: new Date()
       }
-      console.log(`Song ${songId} removed from playlist ${playlistIndex}`)
-      console.log('Updated playlist:', allPlaylists.value[playlistIndex])
-    } else {
-      console.error(`Invalid playlist index: ${playlistIndex}`)
+      
+      if (playlistIndex === 0) {
+        // Локальний плейлист
+        allPlaylists.value[playlistIndex] = updatedPlaylist
+      } else {
+        // Плейлист в базі даних
+        try {
+          const response = await axios.put(`/api/playlists/${updatedPlaylist._id}`, updatedPlaylist)
+          allPlaylists.value[playlistIndex] = response.data
+        } catch (error) {
+          console.error('Error updating playlist:', error)
+        }
+      }
     }
   }
 
@@ -105,6 +114,23 @@ export function usePlaylist() {
     console.log('Selected playlist index:', selectedPlaylistIndex.value)
   }
 
+  const updatePlaylist = async (playlistIndex: number, updatedPlaylist: Partial<Playlist>) => {
+    if (playlistIndex === 0) {
+      // Оновлення локального плейлиста
+      allPlaylists.value[0] = { ...allPlaylists.value[0], ...updatedPlaylist }
+    } else if (playlistIndex < allPlaylists.value.length) {
+      try {
+        const playlist = allPlaylists.value[playlistIndex]
+        if (playlist._id) {
+          const response = await axios.put(`/api/playlists/${playlist._id}`, updatedPlaylist)
+          allPlaylists.value[playlistIndex] = response.data
+        }
+      } catch (error) {
+        console.error('Error updating playlist:', error)
+      }
+    }
+  }
+
   // Fetch playlists on component mount
   fetchPlaylists()
 
@@ -129,6 +155,7 @@ export function usePlaylist() {
     deletePlaylist,
     selectPlaylist,
     clearLocalPlaylist,
-    fetchPlaylists
+    fetchPlaylists,
+    updatePlaylist
   }
 }

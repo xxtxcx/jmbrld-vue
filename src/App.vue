@@ -24,6 +24,7 @@
               :songs="visibleSongList"
               :expandedSong="expandedSong"
               :isWideScreen="isWideScreen"
+              :showRemoveButton="false"
               @selectSong="selectSong($event, isWideScreen)"
               @addToPlaylist="addToPlaylist"
             />

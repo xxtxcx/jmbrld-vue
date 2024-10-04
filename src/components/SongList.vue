@@ -9,7 +9,10 @@
             <p class="text-card-subtitle">{{ song.artist }}</p>
           </div>
           <div class="flex items-center space-x-2">
-            <button 
+            <button v-if="showRemoveButton" @click.stop="$emit('removeSong', song)" class="remove-song-btn">
+      <Trash2 :size="16" />
+    </button>
+            <button v-else
               @click.stop="$emit('addToPlaylist', song)" 
               class="text-primary hover:text-primary-hover opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-bumble rounded-full"
             >
@@ -39,7 +42,7 @@
   </template>
   
   <script setup lang="ts">
-  import { Plus, ChevronDown } from 'lucide-vue-next'
+  import { Plus, ChevronDown, Trash2 } from 'lucide-vue-next'
   
   interface Song {
     _id: string;
@@ -54,6 +57,7 @@
     songs: Song[];
     expandedSong: string | null;
     isWideScreen: boolean;
+    showRemoveButton: boolean;
   }>()
   
   console.log('Songs in SongList:', props.songs)
