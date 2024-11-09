@@ -5,7 +5,8 @@
     <template v-else>
       <!-- Sidebar -->
       <Sidebar 
-        :isDarkMode="isDarkMode" 
+        :isDarkMode="isDarkMode"
+        :userRole="userRole"
         @changeView="currentView = $event"
         @showAddSongModal="showAddSongModal = true"
         @toggleTheme="toggleTheme"
@@ -149,10 +150,14 @@ const activateRickRoll = () => {
   
   const isLoggedIn = ref(false);
 
-const handleLogin = () => {
-  isLoggedIn.value = true;
-  localStorage.setItem('isLoggedIn', 'true');
-};
+  const userRole = ref<'admin' | 'user'>('user')
+
+  const handleLogin = (userData: { username: string, role: 'admin' | 'user' }) => {
+    isLoggedIn.value = true
+    userRole.value = userData.role
+    localStorage.setItem('isLoggedIn', 'true')
+    localStorage.setItem('userRole', userData.role)
+  }
 
   const currentView = ref('main')
   const isWideScreen = ref(window.innerWidth >= 768)

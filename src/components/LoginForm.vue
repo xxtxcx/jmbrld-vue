@@ -24,24 +24,51 @@
     </div>
   </template>
   
-  <script setup>
+  <script setup lang="ts">
   import { ref } from 'vue';
   
   const username = ref('');
   const password = ref('');
   const error = ref('');
   
-  const emit = defineEmits(['login']);
+  const users = {
+  admin: {
+    password: 'adminPass123',
+    role: 'admin'
+  },
+  'hillsong': {
+    password: 'oceans2013',
+    role: 'user'
+  },
+  'bethel': {
+    password: 'goodGoodFather',
+    role: 'user'
+  },
+  'elevation': {
+    password: 'rattle2020',
+    role: 'user'
+  },
+  'planetshakers': {
+    password: 'turnItUp2022',
+    role: 'user'
+  }
+}
+
+const emit = defineEmits(['login'])
 
 const login = () => {
-  if (username.value === 'admin' && password.value === 'password') {
-    emit('login');
-    // Очищаємо поля введення
-    username.value = '';
-    password.value = '';
-    error.value = '';
+  const user = users[username.value as keyof typeof users]
+  
+  if (user && user.password === password.value) {
+    emit('login', {
+      username: username.value,
+      role: user.role
+    })
+    username.value = ''
+    password.value = ''
+    error.value = ''
   } else {
-    error.value = 'Invalid username or password';
+    error.value = 'Invalid username or password'
   }
-};
+}
   </script>
