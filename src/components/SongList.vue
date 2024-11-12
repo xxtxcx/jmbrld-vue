@@ -12,12 +12,56 @@
           <button v-if="showRemoveButton" @click.stop="$emit('removeSong', song)" class="remove-song-btn">
             <Trash2 :size="16" />
           </button>
-          <button v-else
+
+          <div v-else class="relative">
+
+<button
+
+  @click.stop="showDropdown[song._id] = !showDropdown[song._id]" 
+
+  class="text-primary hover:text-primary-hover p-1 bg-bumble rounded-full"
+
+>
+
+  <Plus :size="16" />
+
+</button>
+
+<!-- Dropdown menu -->
+
+<div v-if="showDropdown[song._id] && playlists.length > 1" 
+
+     class="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg z-50">
+
+  <div class="py-1">
+
+    <button
+
+      v-for="playlist in playlists"
+
+      :key="playlist._id || 'local'"
+
+      @click.stop="addSongToPlaylist(song, playlists.indexOf(playlist))"
+
+      class="w-full text-left px-4 py-2 text-sm hover:bg-bumble"
+
+    >
+
+      {{ playlist.name }}
+
+    </button>
+
+  </div>
+
+</div>
+
+</div>
+          <!-- <button v-else
             @click.stop="$emit('addToPlaylist', song)" 
             class="text-primary hover:text-primary-hover opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-bumble rounded-full"
           >
             <Plus :size="16" />
-          </button>
+          </button> -->
           <span class="key-display">{{ song.currentKey || song.originalKey }}</span>
           <button class="text-card-icon p-1 bg-bumble rounded-full">
             <ChevronDown :size="16" />
@@ -38,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { Plus, ChevronDown, Trash2 } from 'lucide-vue-next'
 
 interface Song {
@@ -52,22 +96,46 @@ interface Song {
   bpm: string;
 }
 
+interface Playlist {
+  _id?: string;
+  name: string;
+  songIds: string[];
+}
+
 const props = defineProps<{
   songs: Song[];
   expandedSong: string | null;
   isWideScreen: boolean;
   showRemoveButton: boolean;
+  playlists: Playlist[];
 }>()
 
 const emit = defineEmits<{
   (e: 'selectSong', song: Song): void;
-  (e: 'addToPlaylist', song: Song): void;
+  (e: 'addToPlaylist', song: Song, playlistIndex: number): void;
   (e: 'removeSong', song: Song): void;
 }>()
+
+const showDropdown = reactive<{ [key: string]: boolean }>({})
 
 const selectSong = (song: Song) => {
   emit('selectSong', song)
 }
+
+const addSongToPlaylist = (song: Song, playlistIndex: number) => {
+  console.log(song, playlistIndex)
+  emit('addToPlaylist', song, playlistIndex)
+  showDropdown[song._id] = false
+}
+
+// Закриваємо dropdown при кліку поза ним
+const closeDropdowns = () => {
+  Object.keys(showDropdown).forEach(key => {
+    showDropdown[key] = false
+  })
+}
+
+window.addEventListener('click', closeDropdowns)
 
 const chordRegex = /\b([A-G][b#]?)(m|maj|min|aug|dim)?\d*\b/g;
 

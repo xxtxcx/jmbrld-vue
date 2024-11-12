@@ -41,7 +41,6 @@
   
   const searchTerm = ref('')
   const onUpdateSearch = () => {
-    console.log('Search term updated:', searchTerm.value)
     // Implement logic to filter the song list based on the search term
     // Example: You can emit an event or directly filter your song list in the parent component
   }

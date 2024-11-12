@@ -5,14 +5,11 @@ const { db } = await connectToDatabase();
 const playlistsCollection = db.collection('playlists');
 
 export default async function handler(req, res) {
-  // Додаємо базові CORS заголовки
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
 
-
-  // Обробка preflight запитів
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -31,19 +28,82 @@ export default async function handler(req, res) {
 
     case 'POST':
       try {
-        const playlist = req.body;
-        if (!playlist.name || !Array.isArray(playlist.songIds)) {
-          return res.status(400).json({ error: "Invalid playlist data" });
+        const { action, playlistId, data, songId } = req.body;
+        
+        // Create operation
+        if (action === 'create') {
+          if (!data.name || !Array.isArray(data.songIds)) {
+            return res.status(400).json({ error: "Invalid playlist data" });
+          }
+          const result = await playlistsCollection.insertOne({
+            ...data,
+            updatedAt: new Date()
+          });
+          if (result.acknowledged) {
+            const insertedPlaylist = await playlistsCollection.findOne({ _id: result.insertedId });
+            return res.status(201).json(insertedPlaylist);
+          }
         }
-        const result = await playlistsCollection.insertOne({
-          ...playlist,
-          updatedAt: new Date()
-        });
-        if (result.acknowledged) {
-          const insertedPlaylist = await playlistsCollection.findOne({ _id: result.insertedId });
-          res.status(201).json(insertedPlaylist);
-        } else {
-          throw new Error("Failed to insert the playlist");
+        
+        // Update operation
+        else if (action === 'update') {
+          if (!playlistId) {
+            return res.status(400).json({ error: "Playlist ID is required" });
+          }
+
+          const playlist = await playlistsCollection.findOne({ _id: new ObjectId(playlistId) });
+          if (!playlist) {
+            return res.status(404).json({ error: "Playlist not found" });
+          }
+
+          // Якщо це оновлення для видалення пісні
+          if (songId) {
+            const updatedSongIds = playlist.songIds.filter(id => id !== songId);
+            const result = await playlistsCollection.updateOne(
+              { _id: new ObjectId(playlistId) },
+              { 
+                $set: { 
+                  songIds: updatedSongIds,
+                  updatedAt: new Date() 
+                } 
+              }
+            );
+
+            if (result.modifiedCount === 0) {
+              return res.status(500).json({ error: "Failed to update playlist" });
+            }
+
+            const updatedPlaylist = await playlistsCollection.findOne({ _id: new ObjectId(playlistId) });
+            return res.status(200).json(updatedPlaylist);
+          } 
+          // Звичайне оновлення плейлиста
+          else if (data) {
+            const result = await playlistsCollection.updateOne(
+              { _id: new ObjectId(playlistId) },
+              { $set: { ...data, updatedAt: new Date() } }
+            );
+            if (result.matchedCount === 0) {
+              return res.status(404).json({ error: "Playlist not found" });
+            }
+            const updatedPlaylist = await playlistsCollection.findOne({ _id: new ObjectId(playlistId) });
+            return res.status(200).json(updatedPlaylist);
+          }
+        }
+        
+        // Delete operation
+        else if (action === 'delete') {
+          if (!playlistId) {
+            return res.status(400).json({ error: "Playlist ID is required" });
+          }
+          const result = await playlistsCollection.deleteOne({ _id: new ObjectId(playlistId) });
+          if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "Playlist not found" });
+          }
+          return res.status(200).json({ message: "Playlist deleted successfully" });
+        }
+        
+        else {
+          return res.status(400).json({ error: "Invalid action" });
         }
       } catch (error) {
         console.error("Error in POST /api/playlists:", error);
@@ -51,13 +111,7 @@ export default async function handler(req, res) {
       }
       break;
 
-      case 'PUT':
-        case 'DELETE':
-          console.log(`Received ${req.method} request for playlist ${req.query.id}`);
-          res.status(200).json({ message: `${req.method} request received` });
-          break;
-
     default:
-      res.status(405).end(); // Method Not Allowed
+      res.status(405).end();
   }
 }

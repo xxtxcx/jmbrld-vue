@@ -26,6 +26,7 @@
               :expandedSong="expandedSong"
               :isWideScreen="isWideScreen"
               :showRemoveButton="false"
+              :playlists="allPlaylists"
               @selectSong="selectSong($event, isWideScreen)"
               @addToPlaylist="addToPlaylist"
             />
@@ -49,6 +50,7 @@
         @close="showAddSongModal = false"
         @addSong="handleAddNewSong"
       />
+      <Toast :message="toastMessage" />
 </template>
     <div class="secret-area top-right"></div>
     <div class="secret-area bottom-right"></div>
@@ -71,7 +73,9 @@
   import Playlists from './components/Playlists.vue'
   import { useSongs } from './composables/useSongs'
   import { usePlaylist } from './composables/usePlaylist'
-  import mySong from './assets/rick.mp3'
+  import { useToast } from './composables/useToasts'
+  import Toast from './components/Toast.vue'
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
   const {
@@ -85,6 +89,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
   updateSearch,
   setSongs, originalSongs, songs
 } = useSongs()
+
+const { message: toastMessage, showToast } = useToast()
 
 const secretCode = ['center-left', 'center-left', 'bottom-right', 'bottom-right', 'bottom-right', 'top-right', 'center-left',];
 let userInput: string[] = [];
@@ -172,21 +178,26 @@ const activateRickRoll = () => {
     bpm: '',
   })
   
+  interface Playlist {
+  _id?: string;
+  name: string;
+  songIds: string[];
+}
 
-const { addSongToPlaylist } = usePlaylist()
+const { addSongToPlaylist, allPlaylists } = usePlaylist()
 
-const addToPlaylist = (song: Song) => {
-  addSongToPlaylist(song._id)
-  alert(`Song "${song.title}" added to playlist`)
+const addToPlaylist = async (song: Song, playlistIndex: number) => {
+  await addSongToPlaylist(song._id, playlistIndex)
+  showToast(`Song "${song.title}" added to playlist`)
 }
 
 const handleAddNewSong = async (newSong: Omit<Song, '_id'>) => {
   const success = await addNewSong(newSong)
   if (success) {
     showAddSongModal.value = false
-    alert('New song added successfully!')
+    showToast('New song added successfully!')
   } else {
-    alert('Failed to add new song. Please try again.')
+    showToast('Failed to add new song. Please try again.')
   }
 }
   

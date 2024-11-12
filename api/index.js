@@ -17,8 +17,6 @@ export default async function handler(req, res) {
 
   const { id } = req.query;
 
-  console.log(`Received ${req.method} request for playlist ${id || 'all'}`);
-
   switch (req.method) {
     case 'GET':
       if (id) {

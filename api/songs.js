@@ -9,7 +9,6 @@ export default async function handler(req, res) {
       try {
         const songs = await collection.find({}).toArray();
         res.status(200).json(songs);
-        console.log("Songs fetched successfully:", songs);
       } catch (error) {
         console.error("Error in GET /api/songs:", error);
         res.status(500).json({ error: error.message });
@@ -19,7 +18,6 @@ export default async function handler(req, res) {
     case 'POST':
       try {
         const song = req.body;
-        console.log("Received song data:", song);
 
         // Basic validation
         if (!song.title || !song.artist || !song.originalKey) {
@@ -30,7 +28,6 @@ export default async function handler(req, res) {
         
         if (result.acknowledged) {
           const insertedSong = await collection.findOne({ _id: result.insertedId });
-          console.log("Song added successfully:", insertedSong);
           res.status(201).json(insertedSong);
         } else {
           throw new Error("Failed to insert the song");

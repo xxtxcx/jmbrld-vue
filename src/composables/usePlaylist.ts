@@ -31,40 +31,68 @@ export function usePlaylist() {
     }
   }
   
-  // Викликайте цю функцію при створенні composable
   initLocalPlaylist()
 
-  const addSongToPlaylist = (songId: string, playlistIndex: number = 0) => {
+  const addSongToPlaylist = async (songId: string, playlistIndex: number = 0) => {
     if (playlistIndex >= 0 && playlistIndex < allPlaylists.value.length) {
-      if (!allPlaylists.value[playlistIndex].songIds.includes(songId)) {
-        allPlaylists.value[playlistIndex] = {
-          ...allPlaylists.value[playlistIndex],
-          songIds: [...allPlaylists.value[playlistIndex].songIds, songId],
-          updatedAt: new Date()
+      const playlist = allPlaylists.value[playlistIndex];
+      
+      // Перевіряємо чи пісня вже є в плейлисті
+      if (!playlist.songIds.includes(songId)) {
+        if (playlistIndex === 0) {
+          // Локальний плейлист
+          allPlaylists.value[playlistIndex] = {
+            ...playlist,
+            songIds: [...playlist.songIds, songId],
+            updatedAt: new Date()
+          };
+          console.log(`Song added to local playlist`);
+        } else {
+          // Плейлист в базі даних
+          try {
+            const response = await axios.post('/api/playlists', {
+              action: 'update',
+              playlistId: playlist._id,
+              data: {
+                songIds: [...playlist.songIds, songId],
+                updatedAt: new Date()
+              }
+            });
+            
+            if (response.data) {
+              allPlaylists.value[playlistIndex] = response.data;
+              console.log(`Song ${songId} added to database playlist ${playlistIndex}`);
+            }
+          } catch (error) {
+            console.error('Error updating playlist:', error);
+          }
         }
-        console.log(`Song ${songId} added to playlist ${playlistIndex}`)
-        console.log('Updated playlist:', allPlaylists.value[playlistIndex])
+      } else {
+        console.log(`Song ${songId} already exists in playlist ${playlist.name}`);
       }
     } else {
-      console.error(`Invalid playlist index: ${playlistIndex}`)
+      console.error(`Invalid playlist index: ${playlistIndex}`);
     }
   }
-
+  
   const removeSongFromPlaylist = async (songId: string, playlistIndex: number) => {
     if (playlistIndex >= 0 && playlistIndex < allPlaylists.value.length) {
-      const updatedPlaylist = {
-        ...allPlaylists.value[playlistIndex],
-        songIds: allPlaylists.value[playlistIndex].songIds.filter(id => id !== songId),
-        updatedAt: new Date()
-      }
-      
       if (playlistIndex === 0) {
         // Локальний плейлист
-        allPlaylists.value[playlistIndex] = updatedPlaylist
+        allPlaylists.value[playlistIndex] = {
+          ...allPlaylists.value[playlistIndex],
+          songIds: allPlaylists.value[playlistIndex].songIds.filter(id => id !== songId),
+          updatedAt: new Date()
+        }
       } else {
         // Плейлист в базі даних
         try {
-          const response = await axios.put(`/api/playlists/${updatedPlaylist._id}`, updatedPlaylist)
+          const playlist = allPlaylists.value[playlistIndex]
+          const response = await axios.post('/api/playlists', {
+            action: 'update',
+            playlistId: playlist._id,
+            songId: songId  // Додаємо songId для ідентифікації пісні, яку треба видалити
+          })
           allPlaylists.value[playlistIndex] = response.data
         } catch (error) {
           console.error('Error updating playlist:', error)
@@ -76,7 +104,10 @@ export function usePlaylist() {
   const saveLocalPlaylist = async (name: string) => {
     try {
       const localPlaylist = { ...allPlaylists.value[0], name }
-      const response = await axios.post('/api/playlists', localPlaylist)
+      const response = await axios.post('/api/playlists', {
+        action: 'create',
+        data: localPlaylist
+      })
       allPlaylists.value = [
         { name: 'Local Playlist', songIds: [], updatedAt: new Date() },
         response.data,
@@ -97,7 +128,10 @@ export function usePlaylist() {
     try {
       const playlistToDelete = allPlaylists.value[playlistIndex]
       if (playlistToDelete._id) {
-        await axios.delete(`/api/playlists/${playlistToDelete._id}`)
+        await axios.post('/api/playlists', {
+          action: 'delete',
+          playlistId: playlistToDelete._id
+        })
         allPlaylists.value.splice(playlistIndex, 1)
         if (selectedPlaylistIndex.value >= playlistIndex) {
           selectedPlaylistIndex.value--
@@ -122,7 +156,11 @@ export function usePlaylist() {
       try {
         const playlist = allPlaylists.value[playlistIndex]
         if (playlist._id) {
-          const response = await axios.put(`/api/playlists/${playlist._id}`, updatedPlaylist)
+          const response = await axios.post('/api/playlists', {
+            action: 'update',
+            playlistId: playlist._id,
+            data: updatedPlaylist
+          })
           allPlaylists.value[playlistIndex] = response.data
         }
       } catch (error) {

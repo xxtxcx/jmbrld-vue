@@ -168,6 +168,7 @@ onMounted(() => {
       :expandedSong="expandedSong"
       :isWideScreen="isWideScreen"
       :showRemoveButton="true"
+      :playlists="allPlaylists"
       @selectSong="handleSelectSong"
       @removeSong="handleRemoveSong"
     />

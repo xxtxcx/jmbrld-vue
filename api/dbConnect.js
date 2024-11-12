@@ -18,9 +18,7 @@ export async function connectToDatabase() {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
-  console.log("client1234")
   const db = client.db();
-  console.log("db123")
   cachedClient = client;
   cachedDb = db;
 
