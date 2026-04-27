@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "import:mongo": "node scripts/import-songs.js"
   },
  "dependencies": {
     "uuid": "^8.3.2",
